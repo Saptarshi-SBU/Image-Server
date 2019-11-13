@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+img { 
+      width: 100%; 
+}
+
+.marginauto {
+    margin: 10px auto 20px;
+    display: block;
+}
+</style>
+</head>
+
+<p id="demo"></p>
+
+<script>
+xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    console.log("callback triggered")
+    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+        console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
+        var txt = ""
+        var img_urls = ""
+        var arr = JSON.parse(xmlhttp.responseText)
+        //document.write(arr.length)
+        for (var i in arr) {
+            img_urls += arr[i]
+            img_urls += "<div><img class=marginauto src=http://localhost:4040/api/v1/spics?img=" + arr[i] + " alt=Pic01 style=width:1080px;height:800px; alt=centered image/></div>"
+        }
+        document.getElementById("demo").innerHTML = img_urls;
+    } else {
+        console.error(xmlhttp.statusTest)
+    }
+};
+xmlhttp.open("GET", "http://localhost:4040/api/v1/allpics", true);
+xmlhttp.send();
+</script>
+
+</html>
