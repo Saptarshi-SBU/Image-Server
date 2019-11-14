@@ -66,6 +66,19 @@ class GetSourceHtml(Resource):
             html = "sample.html"
             return send_file('{}'.format(html))
 
+    def post(self):
+            print 'Alive';
+            print vars(request)
+            print dir(request)
+            print request.data
+            for k in request.form:
+                print k
+            print request.files['file']
+            fd = os.open('name', os.O_RDWR | os.O_CREAT, 0644)
+            print fd
+            print os.write(fd, request.files['file'].read())
+            return {"message": "Welcome to Sen Family's Image Server"}
+
 app = Flask(__name__)
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
