@@ -6,16 +6,10 @@ import cv2
 import json
 import uuid
 import time
-import ConfigParser
+from DB import InitPhotosDb
+from imgApp import InsertPhoto, LookupPhotos
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
-
-CONFIG_FILE="/etc/api.cfg"
-
-def GetImageDir(cfg_file):
-    config = ConfigParser.ConfigParser()
-    config.read(cfg_file)
-    return config.get("dir", "path")
 
 class Home(Resource):
 
@@ -34,8 +28,7 @@ class GetPhotoRaw(Resource):
         if img is None:
             return abort(400)
         else:
-            img_dir = GetImageDir(CONFIG_FILE)
-            return send_file('{}/{}'.format(img_dir, img), mimetype='image/jpg')
+            return send_file('{}'.format(img), mimetype='image/jpg')
 
 class GetPhotoScaled(Resource):
 
@@ -44,11 +37,9 @@ class GetPhotoScaled(Resource):
         if img is None:
             return abort(400)
         else:
-            img_dir = GetImageDir(CONFIG_FILE)
-            img_data = cv2.imread('{}/{}'.format(img_dir, img), cv2.IMREAD_COLOR)
+            img_data = cv2.imread('{}'.format(img), cv2.IMREAD_COLOR)
             img_scal = cv2.resize(img_data, dsize=(600, 600), interpolation=cv2.INTER_CUBIC)
-            # encode converts to bytes
-            _, img_encoded = cv2.imencode('.jpg', img_scal)
+            _, img_encoded = cv2.imencode('.jpg', img_scal) # encode converts to bytes
             response = make_response(img_encoded.tostring())
             response.headers.set('Content-Type', 'image/jpg')
             return response
@@ -56,9 +47,7 @@ class GetPhotoScaled(Resource):
 class ListPhotos(Resource):
 
     def get(self):
-            img_dir = GetImageDir(CONFIG_FILE)
-            img_list = [f for f in os.listdir(img_dir)]
-            img_list_string = json.dumps(img_list)
+            img_list_string = json.dumps(LookupPhotos())
             #print 'json {}'.format(img_list_string)
             response = make_response(img_list_string)
             response.headers.add('Access-Control-Allow-Origin', '*')
@@ -78,14 +67,13 @@ class UploadPhotos(Resource):
             return send_file('{}'.format(html))
 
     def post(self):
-            print request.form["tag"]
-            print request.files['file']
+            #print type(request.files['file'])
+            InsertPhoto(request.files['file'].filename, \
+                        request.files['file'].read(), \
+                        request.form["tag"])
             response = make_response()
             response.headers.add('Access-Control-Allow-Origin', '*')
-            fd = os.open('name', os.O_RDWR | os.O_CREAT, 0644)
-            os.write(fd, request.files['file'].read())
             return response
-
 
 app = Flask(__name__)
 api_blueprint = Blueprint('api', __name__)
@@ -99,3 +87,4 @@ api.add_resource(GetPhotoScaled, '/scaledphoto')
 api.add_resource(ListPhotos, '/listphotos')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.config.from_object('config')
+InitPhotosDb()
