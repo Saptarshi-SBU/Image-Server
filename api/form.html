@@ -1,21 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+img { 
+    width: 100%; 
+}
+.marginauto {
+    margin: 20px auto 20px;
+    display: block;
+}
+label {
+    font-size: 96px;
+}
+</style>
+</head>
+
 <form id='file-catcher'>
-  <input id='file-input' name='filename' type='file' multiple/>
-  <input type="text" name="tag"/>
-  <button type='submit'>
+  <div>
+    <img class=marginauto src="http://localhost:4040/api/v1/welcome" alt=centered style=width:2080;height:2080;
+     image/>
+  </div>
+
+  <div  align="center"> 
+    <label for="filename"> Select </label>
+    <input id='file-input' name='filename' type='file' style ="font-size: 96px;" multiple/>
+  </div>
+
+  <br> </br>
+
+  <div  align="center">
+    <label for="tag">Description </label>
+    <input id='tag-input'  name='tag' type='text' style ="font-size: 96px;" > </input>
+  </div>
+
+  <br> </br>
+
+  <div  align="center">  <label for="upload"> Upload </label>
+    <button id='upload-button' type='submit'  name="upload"   style="height: 120px; width: 600px; font-size: 96px;">
     Submit
-  </button>
+    </button>
+    <input id="action" type="button" value="Reset" onclick="run_reset()" style ="font-size: 96px" ></input>
+  </div>
 </form>
 
 <div id='file-list-display'></div>
 
+<script type="text/javascript">
+  function run_reset() {
+    var uploadButton = document.getElementById('upload-button');
+    uploadButton.textContent = "Submit"
+  }
+</script>  
+
 <script>
 (function () {
   var fileInput = document.getElementById('file-input');
+  var filetag = document.getElementById('tag-input');
   var fileCatcher = document.getElementById('file-catcher');
   var fileListDisplay = document.getElementById('file-list-display');
+  var uploadButton = document.getElementById('upload-button');
   
   var fileList = [];
   var renderFileList, sendFile;
+
   
   fileCatcher.addEventListener('submit', function (evnt) {
     evnt.preventDefault();
@@ -31,7 +78,7 @@
     }
     renderFileList();
   });
-/*  
+  
   renderFileList = function () {
     fileListDisplay.innerHTML = '';
     fileList.forEach(function (file, index) {
@@ -40,14 +87,21 @@
       fileListDisplay.appendChild(fileDisplayEl);
     });
   };
-  */
+
   sendFile = function (file) {
     var formData = new FormData();
-    var request = new XMLHttpRequest();
- 
     formData.set('file', file);
-    request.open("POST", 'http://localhost:4040/api/v1/index');
-    request.send(formData);
+    formData.set('tag',  filetag.value);
+
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            uploadButton.textContent = "Done"
+        }
+    };
+    xmlhttp.open("POST", 'http://localhost:4040/api/v1/upload');
+    xmlhttp.send(formData);
   };
 })();
 </script>
+</html>

@@ -22,7 +22,12 @@ class Home(Resource):
     def get(self):
         return {"message": "Welcome to Sen Family's Image Server"}
 
-class ImageRaw(Resource):
+class WelcomeBanner(Resource):
+
+    def get(self):
+        return send_file('{}'.format('welcome.jpg'), mimetype='image/jpg')
+
+class GetPhotoRaw(Resource):
 
     def get(self):
         img = request.args.get('img')
@@ -32,7 +37,7 @@ class ImageRaw(Resource):
             img_dir = GetImageDir(CONFIG_FILE)
             return send_file('{}/{}'.format(img_dir, img), mimetype='image/jpg')
 
-class ImageScaled(Resource):
+class GetPhotoScaled(Resource):
 
     def get(self):
         img = request.args.get('img')
@@ -48,7 +53,7 @@ class ImageScaled(Resource):
             response.headers.set('Content-Type', 'image/jpg')
             return response
 
-class GetAllImages(Resource):
+class ListPhotos(Resource):
 
     def get(self):
             img_dir = GetImageDir(CONFIG_FILE)
@@ -60,32 +65,37 @@ class GetAllImages(Resource):
             response.headers.set('Content-Type', 'application/json')
             return response
 
-class GetSourceHtml(Resource):
+class ViewPhotos(Resource):
 
     def get(self):
-            html = "sample.html"
+            html = "view.html"
+            return send_file('{}'.format(html))
+
+class UploadPhotos(Resource):
+
+    def get(self):
+            html = "form.html"
             return send_file('{}'.format(html))
 
     def post(self):
-            print 'Alive';
-            print vars(request)
-            print dir(request)
-            print request.data
-            for k in request.form:
-                print k
+            print request.form["tag"]
             print request.files['file']
+            response = make_response()
+            response.headers.add('Access-Control-Allow-Origin', '*')
             fd = os.open('name', os.O_RDWR | os.O_CREAT, 0644)
-            print fd
-            print os.write(fd, request.files['file'].read())
-            return {"message": "Welcome to Sen Family's Image Server"}
+            os.write(fd, request.files['file'].read())
+            return response
+
 
 app = Flask(__name__)
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
 api.add_resource(Home, '/')
-api.add_resource(GetSourceHtml, '/index')
-api.add_resource(ImageRaw, '/rpics')
-api.add_resource(ImageScaled, '/spics')
-api.add_resource(GetAllImages, '/allpics')
+api.add_resource(ViewPhotos, '/view')
+api.add_resource(UploadPhotos, '/upload')
+api.add_resource(WelcomeBanner, '/welcome')
+api.add_resource(GetPhotoRaw, '/rawphoto')
+api.add_resource(GetPhotoScaled, '/scaledphoto')
+api.add_resource(ListPhotos, '/listphotos')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.config.from_object('config')
