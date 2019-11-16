@@ -7,7 +7,7 @@ import json
 import uuid
 import time
 from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos
+from imgApp import InsertPhoto, LookupPhotos, FilterPhotos
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
 
@@ -63,7 +63,7 @@ class ViewPhotos(Resource):
 class UploadPhotos(Resource):
 
     def get(self):
-            html = "form.html"
+            html = "upload-form.html"
             return send_file('{}'.format(html))
 
     def post(self):
@@ -75,6 +75,22 @@ class UploadPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+class SearchPhotos(Resource):
+
+    def get(self):
+            html = "filter-form.html"
+            return send_file('{}'.format(html))
+
+    def post(self):
+            print request.form['from_year']
+            print request.form['to_year']
+            print request.form['album']
+            result = FilterPhotos(request.form['from_year'], request.form['to_year'], request.form['album'])
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+            
 app = Flask(__name__)
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
@@ -85,6 +101,7 @@ api.add_resource(WelcomeBanner, '/welcome')
 api.add_resource(GetPhotoRaw, '/rawphoto')
 api.add_resource(GetPhotoScaled, '/scaledphoto')
 api.add_resource(ListPhotos, '/listphotos')
+api.add_resource(SearchPhotos, '/search')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.config.from_object('config')
 InitPhotosDb()

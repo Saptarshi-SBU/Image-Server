@@ -3,43 +3,43 @@
 <head>
 <style>
 img { 
-    width: 100%; 
+    width: 50%; 
 }
 .marginauto {
     margin: 20px auto 20px;
     display: block;
 }
 label {
-    font-size: 96px;
+    font-size: 64px;
 }
 </style>
 </head>
 
 <form id='file-catcher'>
   <div>
-    <img class=marginauto src="http://localhost:4040/api/v1/welcome" alt=centered style=width:2080;height:2080;
+    <img class=marginauto src="http://localhost:4040/api/v1/welcome" alt=centered style=width:1080;height:1080;
      image/>
   </div>
 
   <div  align="center"> 
     <label for="filename"> Select </label>
-    <input id='file-input' name='filename' type='file' style ="font-size: 96px;" multiple/>
+    <input id='file-input' name='filename' type='file' style ="font-size: 64px;" multiple/>
   </div>
 
   <br> </br>
 
   <div  align="center">
     <label for="tag">Description </label>
-    <input id='tag-input'  name='tag' type='text' style ="font-size: 96px;" > </input>
+    <input id='tag-input'  name='tag' type='text' style ="font-size: 64px;" > </input>
   </div>
 
   <br> </br>
 
   <div  align="center">  <label for="upload"> Upload </label>
-    <button id='upload-button' type='submit'  name="upload"   style="height: 120px; width: 600px; font-size: 96px;">
+    <button id='upload-button' type='submit'  name="upload"   style="height: 120px; width: 360px; font-size: 64px;">
     Submit
     </button>
-    <input id="action" type="button" value="Reset" onclick="run_reset()" style ="font-size: 96px" ></input>
+    <input id="action" type="button" value="Reset" onclick="run_reset()" style ="font-size: 64px" ></input>
   </div>
 </form>
 

@@ -3,7 +3,8 @@ import uuid
 import datetime
 import exifread
 import ConfigParser
-from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables
+from sqlalchemy import and_
+from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel
 
 CONFIG_FILE="/etc/api.cfg"
 
@@ -26,6 +27,20 @@ def LookupPhotos():
     with DBManager() as db: 
         _dbSession = db.getSession()
         result = DumpTables(_dbSession)
+        for photo in result:
+            photoPaths.append(photo.Path)
+    return photoPaths
+
+def FilterPhotos(start_year, to_year, album):    
+    photoPaths = []
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        if album:
+            result = _dbSession.query(PhotoModel).filter((PhotoModel.Description == album)).all()
+
+        if len(result) == 0:
+            result = _dbSession.query(PhotoModel).filter(and_(PhotoModel.Year >= int(start_year),
+                         PhotoModel.Year <= int(to_year))).all()
         for photo in result:
             photoPaths.append(photo.Path)
     return photoPaths
