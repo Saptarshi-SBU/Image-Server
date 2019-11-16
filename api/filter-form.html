@@ -22,7 +22,7 @@ label {
 <form id='file-catcher'>
 
   <div  align="center"> 
-    <label for="From"> Months </label>
+    <label for="From"> Year </label>
     <input id='from-year-input' name='from-year' type='text' style ="font-size: 32px;"> </input>
     <input id='to-year-input'   name='to-year'   type='text' style ="font-size: 32px;"> </input>
   </div>
@@ -82,8 +82,8 @@ label {
             var arr = JSON.parse(xmlhttp.responseText)
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
-                img_urls += "<div align=center> <font size=+2>" + arr[i] + "</font> </div>"
-                img_urls += "<div><img class=marginauto src=http://localhost:4040/api/v1/scaledphoto?img=" + arr[i] + " alt=Pic01 style=width:800px;height:600px; alt=centered image/></div>"
+                //img_urls += "<div align=center> <font size=+2>" + arr[i] + "</font> </div>"
+                img_urls += "<div><img class=marginauto src=http://localhost:4040/api/v1/scaledphoto?img=" + arr[i] + " style=width:800px;height:600px; alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
             uploadButton.textContent = "Done"

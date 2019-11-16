@@ -7,14 +7,15 @@ import json
 import uuid
 import time
 from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos, FilterPhotos
+from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, GetPath
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
 
 class Home(Resource):
 
     def get(self):
-        return {"message": "Welcome to Sen Family's Image Server"}
+        return send_file('{}'.format('main.html'))
+        #return {"message": "Welcome to Sen Family's Image Server"}
 
 class WelcomeBanner(Resource):
 
@@ -24,20 +25,20 @@ class WelcomeBanner(Resource):
 class GetPhotoRaw(Resource):
 
     def get(self):
-        img = request.args.get('img')
-        if img is None:
+        img_uuid = request.args.get('img')
+        if img_uuid is None:
             return abort(400)
         else:
-            return send_file('{}'.format(img), mimetype='image/jpg')
+            return send_file(GetPath(img_uuid), mimetype='image/jpg')
 
 class GetPhotoScaled(Resource):
 
     def get(self):
-        img = request.args.get('img')
-        if img is None:
+        img_uuid = request.args.get('img')
+        if img_uuid is None:
             return abort(400)
         else:
-            img_data = cv2.imread('{}'.format(img), cv2.IMREAD_COLOR)
+            img_data = cv2.imread(GetPath(img_uuid), cv2.IMREAD_COLOR)
             img_scal = cv2.resize(img_data, dsize=(600, 600), interpolation=cv2.INTER_CUBIC)
             _, img_encoded = cv2.imencode('.jpg', img_scal) # encode converts to bytes
             response = make_response(img_encoded.tostring())

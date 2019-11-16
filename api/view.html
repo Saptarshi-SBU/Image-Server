@@ -24,8 +24,7 @@ xmlhttp.onreadystatechange = function() {
         var img_urls = ""
         var arr = JSON.parse(xmlhttp.responseText)
         for (var i in arr) {
-            //img_urls += "<div align=center> " + arr[i] + "<style> font size: 120px; </style> </div>"
-            img_urls += "<div align=center> <font size=+10>" + arr[i] + "</font> </div>"
+            //img_urls += "<div align=center> <font size=+10>" + arr[i] + "</font> </div>"
             img_urls += "<div><img class=marginauto src=http://localhost:4040/api/v1/rawphoto?img=" + arr[i] + " alt=Pic01 style=width:2040px;height:1600px; alt=centered image/></div>"
         }
         document.getElementById("demo").innerHTML = img_urls;

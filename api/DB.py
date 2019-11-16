@@ -34,14 +34,14 @@ class PhotoModel(Base):
     Year  = Column(Integer, nullable=False)
     Month = Column(Integer, nullable=False)
     Day   = Column(Integer, nullable=False)
-    Path  = Column(String(stringLen), nullable=False)
+    NameSpace  = Column(String(stringLen), nullable=False)
     Location = Column(String(stringLen), nullable=False)
     Description = Column(String(stringLen), nullable=True)
 
     def __repr__(self):
         return "<%s(UUID : %s, Name :%s Year : %d, Month : %d " \
-            "Day : %d Path : %s Loc : %s Description :%s)" % (self.__tablename__, \
-            self.UUID, self.Name, self.Year, self.Month, self.Day, self.Path,
+            "Day : %d NameSpace : %s Loc : %s Description :%s)" % (self.__tablename__, \
+            self.UUID, self.Name, self.Year, self.Month, self.Day, self.NameSpace,
             self.Location, self.Description)
 
 # Model Queries
@@ -58,7 +58,7 @@ def DBGetPhoto(_dbSession, imgUUID):
     return _dbSession.query(PhotoModel).filter \
         (PhotoModel.UUID==UUID).first()
 
-def DBAddPhoto(_dbSession, Name, UUID, Year, Month, Day, Path, Location='', Description=''):
+def DBAddPhoto(_dbSession, UUID, Name, Year, Month, Day, NameSpace, Location='', Description=''):
     """
         insert record
     """
@@ -67,7 +67,7 @@ def DBAddPhoto(_dbSession, Name, UUID, Year, Month, Day, Path, Location='', Desc
                        Year=Year, \
                        Month=Month, \
                        Day=Day, \
-                       Path=Path, \
+                       NameSpace=NameSpace, \
                        Location=Location, \
                        Description=Description)
     _dbSession.add(photo)
