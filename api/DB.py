@@ -29,20 +29,22 @@ class PhotoModel(Base):
        arep session table for session information from replicator
     """
     __tablename__ = 'PhotoTable'
-    UUID  = Column(String(uuidLen), primary_key=True)
-    Name  = Column(String(stringLen), nullable=False)
-    Year  = Column(Integer, nullable=False)
+    UUID = Column(String(uuidLen), primary_key=True)
+    Name = Column(String(stringLen), nullable=False)
+    Digest = Column(String(stringLen), nullable=False)
+    Day = Column(Integer, nullable=False)
     Month = Column(Integer, nullable=False)
-    Day   = Column(Integer, nullable=False)
-    NameSpace  = Column(String(stringLen), nullable=False)
+    Year = Column(Integer, nullable=False)
+    NameSpace = Column(String(stringLen), nullable=False)
     Location = Column(String(stringLen), nullable=False)
-    Description = Column(String(stringLen), nullable=True)
+    Tags = Column(String(stringLen), nullable=True)
+    Reserved = Column(String(stringLen), nullable=True)
 
     def __repr__(self):
-        return "<%s(UUID : %s, Name :%s Year : %d, Month : %d " \
-            "Day : %d NameSpace : %s Loc : %s Description :%s)" % (self.__tablename__, \
-            self.UUID, self.Name, self.Year, self.Month, self.Day, self.NameSpace,
-            self.Location, self.Description)
+        return "<%s(UUID : %s, Name :%s Digest :%s Year : %d, Month : %d " \
+            "Day : %d NameSpace : %s Loc : %s Tags :%s)" % (self.__tablename__, \
+            self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace,
+            self.Location, self.Tags)
 
 # Model Queries
 def DBGetPhotos(_dbSession):
@@ -58,18 +60,19 @@ def DBGetPhoto(_dbSession, imgUUID):
     return _dbSession.query(PhotoModel).filter \
         (PhotoModel.UUID==UUID).first()
 
-def DBAddPhoto(_dbSession, UUID, Name, Year, Month, Day, NameSpace, Location='', Description=''):
+def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, NameSpace, Location='', Tags=''):
     """
         insert record
     """
     photo = PhotoModel(UUID=UUID, \
                        Name=Name, \
+                       Digest=Digest, \
                        Year=Year, \
                        Month=Month, \
                        Day=Day, \
                        NameSpace=NameSpace, \
                        Location=Location, \
-                       Description=Description)
+                       Tags=Tags)
     _dbSession.add(photo)
     return photo
 

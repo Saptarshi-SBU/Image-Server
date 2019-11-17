@@ -3,7 +3,7 @@
 <head>
 <style>
 img { 
-    width: 100%; 
+    width: 60%; 
 }
 .marginauto {
     margin: 10px auto 20px;
@@ -17,22 +17,21 @@ img {
 <script>
 xmlhttp = new XMLHttpRequest();
 xmlhttp.onreadystatechange = function() {
-    console.log("callback triggered")
     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
         console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
         var txt = ""
         var img_urls = ""
         var arr = JSON.parse(xmlhttp.responseText)
         for (var i in arr) {
-            //img_urls += "<div align=center> <font size=+10>" + arr[i] + "</font> </div>"
-            img_urls += "<div><img class=marginauto src=http://localhost:4040/api/v1/rawphoto?img=" + arr[i] + " alt=Pic01 style=width:2040px;height:1600px; alt=centered image/></div>"
+            img_urls += "<div align=center> <font size=+2>" + "Photo ID : " + arr[i].value.uuid + " Date: " + arr[i].value.date + " </font> </div>"
+            img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid + " alt=centered image/></div>"
         }
         document.getElementById("demo").innerHTML = img_urls;
     } else {
-        console.error(xmlhttp.status)
+        console.log(this.status)
     }
 };
-xmlhttp.open("GET", "http://localhost:4040/api/v1/listphotos", true);
+xmlhttp.open("GET", "http://192.168.0.12:4040/api/v1/listphotos", true);
 xmlhttp.send();
 </script>
 

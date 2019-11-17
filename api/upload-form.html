@@ -10,7 +10,11 @@ img {
     display: block;
 }
 label {
-    font-size: 32px;
+    font-size: 16px;
+}
+
+text {
+    font-size: 16px;
 }
 
 </style>
@@ -18,32 +22,28 @@ label {
 
 <form id='file-catcher'>
   <div>
-    <img class=marginauto src="http://localhost:4040/api/v1/welcome" alt=centered style=width:1080;height:1080;
+    <img class=marginauto src="http://192.168.0.12:4040/api/v1/welcome" alt=centered style=width:1080;height:1080;
      image/>
   </div>
 
   <div  align="center"> 
-    <label for="filename"> Select </label>
-    <input id='file-input' name='filename' type='file' style ="font-size: 32px;" multiple/>
+    <label class=marginauto for="filename"> Select Images</label>
+    <input class=marginauto id='file-input' name='filename' type='file' style ="font-size: 16px;" multiple/>
   </div>
-
-  <br> </br>
 
   <div  align="center">
-    <label for="tag">Description </label>
-    <input id='tag-input'  name='tag' type='text' style ="font-size: 32px;" > </input>
+    <label class=marginauto for="tag">Tags </label>
+    <input id='tag-input'  name='tag' type='text' style ="font-size: 16px;" > </input>
   </div>
 
-  <br> </br>
-
-  <div  align="center">  <label for="upload"> Upload </label>
-    <button id='upload-button' type='submit'  name="upload"   style="height: 40px; width: 120px; font-size: 32px;">
+  <!--<div  class=marginauto align="center">  <label for="upload"> Upload </label> -->
+    <button class=marginauto id='upload-button' type='submit'  name="upload"   style="height: 24px; width: 120px; font-size: 16px;">
     Submit
     </button>
-    <input id="action" type="button" value="Reset" onclick="run_reset()" style ="font-size: 32px" ></input>
-  </div>
+    <input id="action" class=marginauto type="button" value="Reset" onclick="run_reset()" style="font-size: 16px" ></input>
+  <!--</div> -->
 
-  <div> <progress class=marginauto id="progressBar" value="0" max="100" style="width:250px;"></progress>
+  <div> <progress class=marginauto id="progressBar" value="0" max="100" style="height: 16px; width:300px;"></progress>
   </div>
 
 </form>
@@ -74,6 +74,7 @@ label {
     evnt.preventDefault();
     fileList.forEach(function (file) {
         sendFile(file);
+        console.log("Uploaded Files to APIServer\n")
     });
   });
   
@@ -86,12 +87,9 @@ label {
   });
   
   renderFileList = function () {
-    fileListDisplay.innerHTML = '';
     pBar.value = 0;
     fileList.forEach(function (file, index) {
-        var fileDisplayEl = document.createElement('p');
       //fileDisplayEl.innerHTML = (index + 1) + ': ' + file.name;
-      fileListDisplay.appendChild(fileDisplayEl);
     });
   };
 
@@ -102,6 +100,15 @@ label {
 
     var xmlhttp  = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.HEADERS_RECEIVED)
+            uploadButton.textContent = "Uploading";
+
+        if (this.readyState == XMLHttpRequest.LOADING)
+            uploadButton.textContent = "Uploading in Progress";
+
+        if (this.readyState == XMLHttpRequest.DONE && this.status != 200)
+            uploadButton.textContent = "Error";
+
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             uploadButton.textContent = "Done"
             fileCount = fileCount + 1;
@@ -109,8 +116,9 @@ label {
             pBar.value = Math.round(percent);
         }
     };
-    xmlhttp.open("POST", 'http://localhost:4040/api/v1/upload');
+    xmlhttp.open("POST", 'http://192.168.0.12:4040/api/v1/upload');
     xmlhttp.send(formData);
+    console.log("Sent Form Data to APIServer\n")
   };
 })();
 </script>
