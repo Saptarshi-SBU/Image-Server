@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+img { 
+    width: 80%; 
+    height: 60%; 
+}
+
+.marginauto {
+    margin: 10px auto 20px;
+    display: none;
+}
+
+</style>
+</head>
+
+<p id="demo"></p>
+
+<div>
+    <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+</div>
+
+<script>
+
+// holds json for all photos
+var i = 0;
+var arr;
+
+function run_next() {
+    newimg = document.getElementById("img")
+    newimg.style.opacity = 0;
+    newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid
+    newimg.title = arr[i].value.name + "(" + arr[i].value.date + ")"
+    newimg.style.display = "block";
+    newimg.style.opacity = 1;
+    i = (i + 1) % arr.length;
+    setTimeout(run_next, 3000);
+}
+
+xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
+            arr = JSON.parse(xmlhttp.responseText)
+            run_next();
+    } else {
+        console.log(this.status)
+    }
+};
+xmlhttp.open("GET", "http://192.168.0.12:4040/api/v1/listlikephotos", true);
+xmlhttp.send();
+
+</script>
+
+</html>

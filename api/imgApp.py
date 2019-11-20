@@ -35,19 +35,29 @@ def GetPath(img_uuid):
     imgPath = '{}/{}.JPG'.format(img_dir, img_uuid)
     return imgPath
 
-def LookupPhotos():
+def LookupPhotos(like=False):
     photoPaths = []
     with DBManager() as db: 
         _dbSession = db.getSession()
-        result = _dbSession.query(PhotoModel).order_by(
-            PhotoModel.Year.desc()
-            ).order_by(
-            PhotoModel.Month.desc()
-            ).order_by(
-            PhotoModel.Day.desc()
-            )
+        if like:
+            result = _dbSession.query(PhotoModel).filter((PhotoModel.Reserved == "Like")).order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        )
+        else:               
+            result = _dbSession.query(PhotoModel).order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        )
         for photo in result:
-            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month, photo.Year)}})
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month,
+            photo.Year), "name" : photo.Name }})
     return photoPaths
 
 def FilterPhotos(start_year, to_year, album):    
@@ -101,4 +111,21 @@ def InsertPhoto(filename, fileBlob, description):
         _dbSession = db.getSession()
         DBAddPhoto(_dbSession, img_uuid, filename, digest, \
             year, month, day, img_dir, " ", description)
+        _dbSession.commit()
+
+def MarkPhotoFav(img_uuid):    
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
+        for i in result:
+            i.Reserved = "Like"
+        _dbSession.commit()
+        print ("Marked Like photo :", img_uuid)
+
+def DeletePhoto(img_uuid):    
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
+        for i in result:
+            _dbSession.delete(i)
         _dbSession.commit()

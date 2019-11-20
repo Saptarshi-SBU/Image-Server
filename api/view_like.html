@@ -33,8 +33,6 @@ img {
 <div class="btn-group">
   <button onclick="run_next()"> >> </button>
   <button onclick="run_prev()"> << </button>
-  <button onclick="run_like()"> LIKE </button>
-  <button onclick="run_delete()"> Trash </button>
 </div>
 
 
@@ -48,38 +46,26 @@ img {
 var arr;
 
 // holds next cursor
-var next_index = -1;
+var next_index = 0;
 
 function run_next() {
     newimg = document.getElementById("img")
-    next_index = (next_index + 1) % arr.length;
     newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
+    next_index = (next_index + 1) % arr.length;
 }
 
 function run_prev() {
     console.log("start next index :" + next_index)
     newimg = document.getElementById("img")
-    next_index = next_index - 1;
+    nex_index = next_index - 1;
     if (next_index < 0)
         next_index = arr.length - 1;
     newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
     console.log("next index :" + next_index)
-}
-
-function run_like() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://192.168.0.12:4040/api/v1/likephoto", true);
-    xmlhttp.send(arr[next_index].value.uuid);
-}
-
-function run_delete() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://192.168.0.12:4040/api/v1/deletephoto", true);
-    xmlhttp.send(arr[next_index].value.uuid);
 }
 
 xmlhttp = new XMLHttpRequest();
@@ -92,7 +78,7 @@ xmlhttp.onreadystatechange = function() {
         console.log(this.status)
     }
 };
-xmlhttp.open("GET", "http://192.168.0.12:4040/api/v1/listphotos", true);
+xmlhttp.open("GET", "http://192.168.0.12:4040/api/v1/listlikephotos", true);
 xmlhttp.send();
 
 </script>
