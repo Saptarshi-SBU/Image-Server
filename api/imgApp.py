@@ -1,8 +1,10 @@
 import os
 import uuid
+import random
 import datetime
 import exifread
 import ConfigParser
+from sqlalchemy import func
 from sqlalchemy import and_
 from checksum import comp_checksum
 from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel
@@ -35,6 +37,13 @@ def GetPath(img_uuid):
     imgPath = '{}/{}.JPG'.format(img_dir, img_uuid)
     return imgPath
 
+def SortbyDate(jsonData):
+    year  = int(jsonData["value"]["year"])
+    month = int(jsonData["value"]["month"])
+    day   = int(jsonData["value"]["day"])
+    dt = datetime.date(year=year, month=month, day=day)
+    return dt
+
 def LookupPhotos(like=False):
     photoPaths = []
     with DBManager() as db: 
@@ -60,22 +69,84 @@ def LookupPhotos(like=False):
             photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
     return photoPaths
 
-def FilterPhotos(start_year, to_year, album):    
+def FilterPhotos(start_year, to_year, album=None):
     photoPaths = []
     result = []
+
+    #check unicode
+    if not start_year.isnumeric():
+        start_year = 0
+
+    if not to_year.isnumeric():
+        to_year = 2050
+
     with DBManager() as db: 
         _dbSession = db.getSession()
         if album:
-            result = _dbSession.query(PhotoModel).filter((PhotoModel.Tags == album)).all()
-
-        if len(result) == 0:
+            search = "%{}%".format(album)
+            result = _dbSession.query(PhotoModel).filter(PhotoModel.Tags.ilike(search)) \
+                        .order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        )
+            result = [ photo for photo in result if photo.Year >= int(start_year) and \
+                photo.Year <= int(to_year) ]
+        else:
             result = _dbSession.query(PhotoModel).filter(and_(PhotoModel.Year >= int(start_year),
-                         PhotoModel.Year <= int(to_year))).all()
+                         PhotoModel.Year <= int(to_year))) \
+                        .order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        )
 
         for photo in result:
-            photoPaths.append(photo.UUID)
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month, \
+                photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
+            #photoPaths.append(photo.UUID)
 
     return photoPaths
+
+def FilterPhotoAlbums():
+    photoPaths = {}
+    photoList = []
+    result = []
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        ).all()
+
+    random.shuffle(result)
+
+    #unique albums
+    for photo in result:
+        photoPaths[photo.Tags] = { \
+                                    "value" : \
+                                        { "uuid"  : photo.UUID, \
+                                          "day"   : photo.Day, \
+                                          "month" : photo.Month, \
+                                          "year"  : photo.Year, \
+                                          "name"  : photo.Name, \
+                                          "tags"  : photo.Tags \
+                                        } \
+                                 }
+
+    for key in photoPaths:
+        photoList.append(photoPaths[key])
+    photoList.sort(key=SortbyDate, reverse=True)
+
+    return photoList
+
 
 def TestDuplicate(sourceBlob, digest):
     with DBManager() as db: 

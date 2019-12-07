@@ -16,12 +16,24 @@ label {
 </head>
 
 <div align="center" style="font-size: 32px;" >
-    <br> Welcome to Image Search </br>
+    <br> Welcome to Photo Gallery Search </br>
 </div>    
 
 <form id='file-catcher'>
 
+<!--
   <div  align="center"> 
+    <label for="From"> Year </label>
+    <input id='from-year-input' name='from-year' type='text' style ="font-size: 32px;"> </input>
+    <input id='to-year-input'   name='to-year'   type='text' style ="font-size: 32px;"> </input>
+  </div>
+-->
+
+  <br> </br>
+
+  <div  align="center">
+    <label for="Album">Album </label>
+    <input id='album-input'  name='album' type='text' style ="font-size: 32px;" > </input>
     <label for="From"> Year </label>
     <input id='from-year-input' name='from-year' type='text' style ="font-size: 32px;"> </input>
     <input id='to-year-input'   name='to-year'   type='text' style ="font-size: 32px;"> </input>
@@ -29,25 +41,47 @@ label {
 
   <br> </br>
 
-  <div  align="center">
-    <label for="Album">Album </label>
-    <input id='album-input'  name='album' type='text' style ="font-size: 32px;" > </input>
-  </div>
-
-  <br> </br>
-
-  <div  align="center">  <label for="Submit"> Submit</label>
-    <button id='query-button' type='submit'  name="query"   style="height: 32px; width: 128px; font-size: 24px;">
-    Submit
+  <div  align="center">  <label for="Submit"> Search</label>
+    <button id='query-album-button' type='button' value="ShowAlbums" onclick="run_albumsearch()" style="height: 32px;
+    width: 256px; font-size: 24px;">
+    ShowAlbums
     </button>
-    <input id="action" type="button" value="Reset" onclick="run_reset()" style ="font-size: 16px" ></input>
+    <button id='query-button' type='submit' name="query"   style="height: 32px; width: 256px; font-size: 24px;">
+    ShowPhotos
+    </button>
+    <input id="action" type="button" value="Clear" onclick="run_reset()" style ="font-size: 16px" ></input>
   </div>
 </form>
 
 <script type="text/javascript">
   function run_reset() {
-    var uploadButton = document.getElementById('query-button');
-    uploadButton.textContent = "Submit"
+    var from_year = document.getElementById('from-year-input');
+    var to_year = document.getElementById('to-year-input');
+    var album = document.getElementById('album-input');
+
+    from_year.value = ''
+    to_year.value = ''
+    album.value = ''
+  }
+
+  function run_albumsearch() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            var txt = ""
+            var img_urls = ""
+            var arr = JSON.parse(xmlhttp.responseText)
+            console.log('\nlog: ' + arr.length)
+            for (var i in arr) {
+                img_urls += "<div align=center> <font size=+2>" + arr[i].value.tags + "</font> </div>"
+                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" +
+                    arr[i].value.uuid + " alt=centered image/></div>"
+            }
+            document.getElementById("demo").innerHTML = img_urls;
+        }
+    };
+    xmlhttp.open("POST", 'http://192.168.0.12:4040/api/v1/searchalbums');
+    xmlhttp.send();
   }
 </script>  
 
@@ -59,7 +93,6 @@ label {
   var to_year = document.getElementById('to-year-input');
   var album = document.getElementById('album-input');
   var fileCatcher = document.getElementById('file-catcher');
-  var uploadButton = document.getElementById('query-button');
   
   var sendFile;
 
@@ -82,11 +115,11 @@ label {
             var arr = JSON.parse(xmlhttp.responseText)
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
-                //img_urls += "<div align=center> <font size=+2>" + arr[i] + "</font> </div>"
-                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[i] + " style=width:800px;height:600px; alt=centered image/></div>"
+                img_urls += "<div align=center> <font size=+2>" + arr[i].value.tags + "</font> </div>"
+                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" +
+                    arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
-            uploadButton.textContent = "Done"
         }
     };
     xmlhttp.open("POST", 'http://192.168.0.12:4040/api/v1/search');

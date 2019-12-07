@@ -11,7 +11,7 @@ import time
 import datetime
 from functools import wraps, update_wrapper
 from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, DeletePhoto, MarkPhotoFav, UpdatePhotoTag, GetPath
+from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, UpdatePhotoTag, GetPath
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
 
@@ -132,6 +132,15 @@ class SearchPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+class SearchAlbums(Resource):
+
+    def post(self):
+            result = FilterPhotoAlbums()
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 class LikePhoto(Resource):
 
     def post(self):
@@ -182,6 +191,7 @@ api.add_resource(GetPhotoScaled, '/scaledphoto')
 api.add_resource(ListPhotos, '/listphotos')
 api.add_resource(ListLikePhotos, '/listlikephotos')
 api.add_resource(SearchPhotos, '/search')
+api.add_resource(SearchAlbums, '/searchalbums')
 api.add_resource(LikePhoto, '/likephoto')
 api.add_resource(UnlikePhoto, '/unlikephoto')
 api.add_resource(UpdatePhoto, '/updatephoto')
