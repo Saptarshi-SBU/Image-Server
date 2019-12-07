@@ -11,7 +11,7 @@ import time
 import datetime
 from functools import wraps, update_wrapper
 from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, DeletePhoto, MarkPhotoFav, GetPath
+from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, DeletePhoto, MarkPhotoFav, UpdatePhotoTag, GetPath
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
 
@@ -140,6 +140,14 @@ class LikePhoto(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+class UnlikePhoto(Resource):
+
+    def post(self):
+            MarkPhotoFav(request.data, False)
+            response = make_response()
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 class RemovePhoto(Resource):
 
     def post(self):
@@ -149,6 +157,16 @@ class RemovePhoto(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
             
+class UpdatePhoto(Resource):
+
+    def post(self):
+            print request.data
+            data = json.loads(request.data)
+            UpdatePhotoTag(data['value']['uuid'], data['value']['tags'])
+            response = make_response()
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 app = Flask(__name__)
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
@@ -165,6 +183,8 @@ api.add_resource(ListPhotos, '/listphotos')
 api.add_resource(ListLikePhotos, '/listlikephotos')
 api.add_resource(SearchPhotos, '/search')
 api.add_resource(LikePhoto, '/likephoto')
+api.add_resource(UnlikePhoto, '/unlikephoto')
+api.add_resource(UpdatePhoto, '/updatephoto')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.config.from_object('config')
 InitPhotosDb()

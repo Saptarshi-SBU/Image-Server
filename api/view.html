@@ -13,6 +13,13 @@ img {
     display: none;
 }
 
+.marginauto_cap {
+    margin: 10px auto 20px;
+    text-align: center;
+    height: 32px; 
+    font-size: 32px;
+}
+
 .btn-group button {
   background-color: #4CAF50; /* Green background */
   //border: 1px solid green; /* Green border */
@@ -30,16 +37,18 @@ img {
 
 <p id="demo"></p>
 
-<div class="btn-group">
-  <button onclick="run_next()"> >> </button>
+<div class="w3-content">
+  <figure>
+  <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+  <div class="marginauto_cap"> <figcaption id="icaption">Image Description </figcaption> </div>
+  </figure>
+<div class="marginauto_cap">
   <button onclick="run_prev()"> << </button>
   <button onclick="run_like()"> LIKE </button>
-  <button onclick="run_delete()"> Trash </button>
+  <button onclick="run_unlike()"> UNLIKE </button>
+  <button onclick="run_delete()"> DELETE </button>
+  <button onclick="run_next()"> >> </button>
 </div>
-
-
-<div class="w3-content">
-  <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
 </div>
 
 <script>
@@ -51,11 +60,15 @@ var arr;
 var next_index = -1;
 
 function run_next() {
+    var total = arr.length
     newimg = document.getElementById("img")
     next_index = (next_index + 1) % arr.length;
     newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
+    newcap = document.getElementById("icaption")
+    newcap.innerHTML = arr[next_index].value.tags + " " + "(" + next_index.toString() + "/" + total.toString() + ")"
+    newcap.style.display = "block";
 }
 
 function run_prev() {
@@ -67,12 +80,21 @@ function run_prev() {
     newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
+    newcap = document.getElementById("icaption")
+    newcap.innerHTML = arr[next_index].value.tags + " " +"(" + next_index.toString() + "/" + total.toString() + ")"
+    newcap.style.display = "block";
     console.log("next index :" + next_index)
 }
 
 function run_like() {
     xmlhttp = new XMLHttpRequest();
     xmlhttp.open("POST", "http://192.168.0.12:4040/api/v1/likephoto", true);
+    xmlhttp.send(arr[next_index].value.uuid);
+}
+
+function run_unlike() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://192.168.0.12:4040/api/v1/unlikephoto", true);
     xmlhttp.send(arr[next_index].value.uuid);
 }
 

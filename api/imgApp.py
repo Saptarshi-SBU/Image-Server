@@ -57,7 +57,7 @@ def LookupPhotos(like=False):
                         )
         for photo in result:
             photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month,
-            photo.Year), "name" : photo.Name }})
+            photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
     return photoPaths
 
 def FilterPhotos(start_year, to_year, album):    
@@ -66,7 +66,7 @@ def FilterPhotos(start_year, to_year, album):
     with DBManager() as db: 
         _dbSession = db.getSession()
         if album:
-            result = _dbSession.query(PhotoModel).filter((PhotoModel.Description == album)).all()
+            result = _dbSession.query(PhotoModel).filter((PhotoModel.Tags == album)).all()
 
         if len(result) == 0:
             result = _dbSession.query(PhotoModel).filter(and_(PhotoModel.Year >= int(start_year),
@@ -113,14 +113,17 @@ def InsertPhoto(filename, fileBlob, description):
             year, month, day, img_dir, " ", description)
         _dbSession.commit()
 
-def MarkPhotoFav(img_uuid):    
+def MarkPhotoFav(img_uuid, like=True):    
     with DBManager() as db: 
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
         for i in result:
-            i.Reserved = "Like"
-        _dbSession.commit()
-        print ("Marked Like photo :", img_uuid)
+            if like:
+                i.Reserved = "Like"
+            else:
+                i.Reserved = "Unlike"
+            _dbSession.commit()
+        print ("Marked Like photo :", img_uuid, like)
 
 def DeletePhoto(img_uuid):    
     with DBManager() as db: 
@@ -129,3 +132,12 @@ def DeletePhoto(img_uuid):
         for i in result:
             _dbSession.delete(i)
         _dbSession.commit()
+
+def UpdatePhotoTag(img_uuid, tag):    
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
+        for i in result:
+            i.Tags = tag
+        _dbSession.commit()
+        print ('Updated {} {}'.format(img_uuid, tag))   
