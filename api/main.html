@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <style>
 .center {
       display: block;
@@ -8,31 +7,23 @@
       margin-right: auto;
       width: 50%;
 }
+html { 
+      background: url(http://192.168.0.12:4040/api/v1/welcome) no-repeat center center fixed; 
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+}
 </style>
 
 <body>
-
-<img class="center" src="http://192.168.0.12:4040/api/v1/welcome">
-
-<div align="center" style="font-size: 32px;" >
-    <p><a href="http://192.168.0.12:4040/api/v1/view">ViewPhotos</a></p>
-</div>    
-
-<div align="center" style="font-size: 32px;" >
-    <p><a href="http://192.168.0.12:4040/api/v1/auto">ViewPhotosAuto</a></p>
-</div>    
-
-<div align="center" style="font-size: 32px;" >
-    <p><a href="http://192.168.0.12:4040/api/v1/viewlike">ViewPhotosLiked</a></p>
-</div>    
-
-<div align="center" style="font-size: 32px;" >
-    <p><a href="http://192.168.0.12:4040/api/v1/upload">UploadPhotos</a></p>
-</div>   
-
-<div align="center" style="font-size: 32px;" >
-    <p><a href="http://192.168.0.12:4040/api/v1/search">SearchPhotos</a></p>
-</div>    
-
+<div align="right" style="font-size: 20px;" >
+    <a href="http://192.168.0.12:4040/api/v1/view">ViewAlbums</a>
+    <a href="http://192.168.0.12:4040/api/v1/viewlike">MyFavourites</a>
+    <a href="http://192.168.0.12:4040/api/v1/upload">UploadPhotos</a>
+    <a href="http://192.168.0.12:4040/api/v1/search">SearchPhotos</a>
+    <a href="http://192.168.0.12:4040/api/v1/auto">SlideShow</a></p>
+</div> 
+<p style="font-size: 32px; text-align:center;"><font face="georgia"> Find your inspiration today!</font></p>
 </body>
 </html>

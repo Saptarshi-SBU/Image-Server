@@ -9,9 +9,11 @@ import objgraph
 import uuid
 import time
 import datetime
+import urllib
 from functools import wraps, update_wrapper
 from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, UpdatePhotoTag, GetPath
+from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+    UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response
 
@@ -36,7 +38,7 @@ class Home(Resource):
 class WelcomeBanner(Resource):
 
     def get(self):
-        return send_file('{}'.format('welcome.jpg'), mimetype='image/jpg', cache_timeout=1)
+        return send_file('{}'.format('welcome_2.0.jpg'), mimetype='image/jpg', cache_timeout=1)
 
 class GetPhotoRaw(Resource):
 
@@ -86,8 +88,19 @@ class ListLikePhotos(Resource):
 class ViewPhotos(Resource):
 
     def get(self):
-            html = "view.html"
-            return send_file('{}'.format(html))
+            return send_file("show_albums.html")
+
+class EditPhotos(Resource):
+
+    def get(self):
+            img_album = urllib.unquote(request.args.get('img'))
+            with open('api/edit_photo.html', 'r') as fp:
+                data = fp.read()
+                data = data.replace("ca509b27-cd33-45ab-9d71-6e1e2df48b09", str(img_album))
+                response = make_response(data)
+                print data
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
 class ViewPhotosAuto(Resource):
 
@@ -104,7 +117,7 @@ class ViewLikedPhotos(Resource):
 class UploadPhotos(Resource):
 
     def get(self):
-            html = "upload_form.html"
+            html = "upload_album.html"
             return send_file('{}'.format(html))
 
     def post(self):
@@ -119,7 +132,7 @@ class UploadPhotos(Resource):
 class SearchPhotos(Resource):
 
     def get(self):
-            html = "filter-form.html"
+            html = "search_photos.html"
             return send_file('{}'.format(html))
 
     def post(self):
@@ -132,10 +145,39 @@ class SearchPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
-class SearchAlbums(Resource):
+class GetMyAlbums(Resource):
 
     def post(self):
             result = FilterPhotoAlbums()
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
+class GetMyAlbum(Resource):
+
+    def get(self):
+            img_album = urllib.unquote(request.args.get('img'))
+            with open('api/show_album.html', 'r') as fp:
+                data = fp.read()
+                data = data.replace("album_value", str(img_album))
+                response = make_response(data)
+                #print data
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
+
+    def post(self):
+            img_album = request.data
+            result = GetAlbumPhotos(img_album)
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
+class AutoCompleteAlbumSearch(Resource):
+
+    def post(self):
+            result = AutoCompleteAlbum(request.data)
             result = json.dumps(result)
             response = make_response(result)
             response.headers.add('Access-Control-Allow-Origin', '*')
@@ -183,6 +225,7 @@ api.add_resource(Home, '/')
 api.add_resource(ViewPhotos, '/view')
 api.add_resource(ViewPhotosAuto, '/auto')
 api.add_resource(ViewLikedPhotos, '/viewlike')
+api.add_resource(EditPhotos, '/edit')
 api.add_resource(UploadPhotos, '/upload')
 api.add_resource(RemovePhoto, '/deletephoto')
 api.add_resource(WelcomeBanner, '/welcome')
@@ -191,7 +234,9 @@ api.add_resource(GetPhotoScaled, '/scaledphoto')
 api.add_resource(ListPhotos, '/listphotos')
 api.add_resource(ListLikePhotos, '/listlikephotos')
 api.add_resource(SearchPhotos, '/search')
-api.add_resource(SearchAlbums, '/searchalbums')
+api.add_resource(GetMyAlbums, '/myalbums')
+api.add_resource(GetMyAlbum, '/myalbum')
+api.add_resource(AutoCompleteAlbumSearch, '/autocomplete')
 api.add_resource(LikePhoto, '/likephoto')
 api.add_resource(UnlikePhoto, '/unlikephoto')
 api.add_resource(UpdatePhoto, '/updatephoto')

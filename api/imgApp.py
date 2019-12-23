@@ -8,6 +8,8 @@ from sqlalchemy import func
 from sqlalchemy import and_
 from checksum import comp_checksum
 from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel
+from bktree import CreateBkTree, ApproximateMatch
+from edit_distance import edit_distance
 
 CONFIG_FILE="/etc/api.cfg"
 
@@ -68,6 +70,27 @@ def LookupPhotos(like=False):
             photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month,
             photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
     return photoPaths
+
+def GetAlbumPhotos(album):
+    photoPaths = []
+    result = []
+
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).filter(PhotoModel.Tags == album) \
+                        .order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        )
+
+        for photo in result:
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month, \
+                photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
+            #photoPaths.append(photo.UUID)
+        return photoPaths
 
 def FilterPhotos(start_year, to_year, album=None):
     photoPaths = []
@@ -137,14 +160,18 @@ def FilterPhotoAlbums():
                                           "month" : photo.Month, \
                                           "year"  : photo.Year, \
                                           "name"  : photo.Name, \
-                                          "tags"  : photo.Tags \
+                                          "tags"  : photo.Tags, \
+                                          "count" : int(0) \
                                         } \
                                  }
 
-    for key in photoPaths:
-        photoList.append(photoPaths[key])
-    photoList.sort(key=SortbyDate, reverse=True)
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        for key in photoPaths:
+            photoPaths[key]["value"]["count"] = _dbSession.query(PhotoModel).filter(PhotoModel.Tags == key).count()
+            photoList.append(photoPaths[key])
 
+    photoList.sort(key=SortbyDate, reverse=True)
     return photoList
 
 
@@ -212,3 +239,41 @@ def UpdatePhotoTag(img_uuid, tag):
             i.Tags = tag
         _dbSession.commit()
         print ('Updated {} {}'.format(img_uuid, tag))   
+
+def AutoCompleteAlbum(text, k = 2):
+    print 'start'
+    tag_names_input = []
+    tag_names_output = []
+    tag_words = []
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        for value in _dbSession.query(PhotoModel.Tags).distinct():
+            tag_names_input.append(value[0])
+            tag_words.extend(value[0].split())
+
+    bktree = CreateBkTree(tag_words)
+    text = text.split()
+    word_dist = {}
+    for i in range(0, k + 1):
+        word_dist[i] = []
+
+    for i in text:
+        nearest_words = ApproximateMatch(bktree, i, k)
+        for word in nearest_words:
+            dist = edit_distance(i, word, dp=True)
+            word_dist[dist].append(word)
+
+    nearest_words_byrank = []
+    for i in range(0, k + 1):
+        nearest_words_byrank.extend(word_dist[i])
+    print nearest_words_byrank    
+    
+        #print nearest_words
+    for word in nearest_words_byrank:
+        for tag_name in tag_names_input:
+            #print tag_name
+            if tag_name.find(word) != -1:
+                if tag_name not in tag_names_output:
+                    tag_names_output.append(tag_name)
+    print tag_names_output
+    return tag_names_output
