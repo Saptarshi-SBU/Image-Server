@@ -3,6 +3,10 @@
 <head>
 <style>
 
+a {
+    text-decoration: none;
+}
+
 img { 
     width: 50%; 
 }
@@ -34,7 +38,7 @@ img {
                 image = encodeURIComponent(text)
                 console.log(image)
                 img_urls += "<div align=center> <font size=+2>" + "Album : <a href=http://192.168.0.12:4040/api/v1/myalbum?img=" + image + ">" + arr[i].value.tags + "</a>" + " (" +  arr[i].value.count + ")" + "</font> </div>"
-                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" +
+                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" +
                     arr[i].value.uuid + " alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;

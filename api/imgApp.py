@@ -12,7 +12,7 @@ from auto_complete import AutoComplete
 
 CONFIG_FILE="/etc/api.cfg"
 
-def GetImageDir(cfg_file):
+def GetImageDir(cfg_file=CONFIG_FILE):
     config = ConfigParser.ConfigParser()
     config.read(cfg_file)
     return config.get("dir", "path")

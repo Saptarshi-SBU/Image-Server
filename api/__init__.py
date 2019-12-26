@@ -13,9 +13,9 @@ import urllib
 from functools import wraps, update_wrapper
 from DB import InitPhotosDb
 from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos
+    UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetImageDir
 from flask_restful import Resource, Api, reqparse
-from flask import Flask, Blueprint, send_file, request, make_response
+from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory
 
 def nocache(view):
     @wraps(view)
@@ -98,7 +98,6 @@ class EditPhotos(Resource):
                 data = fp.read()
                 data = data.replace("ca509b27-cd33-45ab-9d71-6e1e2df48b09", str(img_album))
                 response = make_response(data)
-                print data
                 response.headers.add('Access-Control-Allow-Origin', '*')
                 return response
 
@@ -218,7 +217,15 @@ class UpdatePhoto(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+class DownloadPhoto(Resource):
+
+    def get(self):
+            img_uuid = request.args.get("img")
+            img_file = '{}.JPG'.format(img_uuid)
+            return send_from_directory(GetImageDir(), img_file, as_attachment=True)
+
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
 api.add_resource(Home, '/')
@@ -240,6 +247,7 @@ api.add_resource(AutoCompleteAlbumSearch, '/autocomplete')
 api.add_resource(LikePhoto, '/likephoto')
 api.add_resource(UnlikePhoto, '/unlikephoto')
 api.add_resource(UpdatePhoto, '/updatephoto')
+api.add_resource(DownloadPhoto, '/downloadphoto')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.config.from_object('config')
 InitPhotosDb()
