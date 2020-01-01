@@ -74,7 +74,7 @@ text {
     evnt.preventDefault();
     fileList.forEach(function (file) {
         sendFile(file);
-        console.log("Uploaded Files to APIServer\n")
+        console.log("Uploading Files to APIServer:" + file)
     });
   });
   
@@ -114,11 +114,11 @@ text {
             fileCount = fileCount + 1;
             var percent = (fileCount / fileList.length) * 100;
             pBar.value = Math.round(percent);
+            console.log("Sent Form Data to APIServer\n")
         }
     };
     xmlhttp.open("POST", 'http://192.168.0.12:4040/api/v1/upload');
     xmlhttp.send(formData);
-    console.log("Sent Form Data to APIServer\n")
   };
 })();
 </script>

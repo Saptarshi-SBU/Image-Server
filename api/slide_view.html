@@ -26,7 +26,7 @@ img {
 <p id="demo"></p>
 
 <div>
-    <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+    <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
     <div class="marginauto_cap"> <figcaption id="icaption">Image Description </figcaption> </div>
 </div>
 
@@ -40,7 +40,7 @@ function run_next() {
     var total = arr.length
     newimg = document.getElementById("img")
     newimg.style.opacity = 0;
-    newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid
+    newimg.src = "http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
     newimg.title = arr[i].value.name + "(" + arr[i].value.date + ")"
     newimg.style.display = "block";
     newimg.style.opacity = 1;

@@ -16,6 +16,7 @@ from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, D
     UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetImageDir
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory
+import traceback
 
 def nocache(view):
     @wraps(view)
@@ -29,6 +30,15 @@ def nocache(view):
         
     return update_wrapper(no_cache, view)
 
+def ProcessImage(filepath, scale_percent=25):
+        img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        width  = int(img_data.shape[1] * scale_percent / 100)
+        height = int(img_data.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        img_scal = cv2.resize(img_data, dim, interpolation=cv2.INTER_LINEAR)
+        _, img_encoded = cv2.imencode('.jpg', img_scal) # encode converts to bytes
+        return img_encoded.tostring()
+
 class Home(Resource):
 
     def get(self):
@@ -38,7 +48,9 @@ class Home(Resource):
 class WelcomeBanner(Resource):
 
     def get(self):
-        return send_file('{}'.format('welcome_2.0.jpg'), mimetype='image/jpg', cache_timeout=1)
+        response = make_response(ProcessImage('api/welcome_2.0.jpg'))
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
 
 class GetPhotoRaw(Resource):
 
@@ -58,10 +70,7 @@ class GetPhotoScaled(Resource):
         if img_uuid is None:
             return abort(400)
         else:
-            img_data = cv2.imread(GetPath(img_uuid), cv2.IMREAD_COLOR)
-            img_scal = cv2.resize(img_data, dsize=(600, 600), interpolation=cv2.INTER_CUBIC)
-            _, img_encoded = cv2.imencode('.jpg', img_scal) # encode converts to bytes
-            response = make_response(img_encoded.tostring())
+            response = make_response(ProcessImage(GetPath(img_uuid)))
             response.headers.set('Content-Type', 'image/jpg')
             return response
 
@@ -88,7 +97,8 @@ class ListLikePhotos(Resource):
 class ViewPhotos(Resource):
 
     def get(self):
-            return send_file("show_albums.html")
+            return send_file("view_tile.html")
+            #return send_file("show_albums.html")
 
 class EditPhotos(Resource):
 
@@ -126,6 +136,7 @@ class UploadPhotos(Resource):
                         request.form["tag"])
             response = make_response()
             response.headers.add('Access-Control-Allow-Origin', '*')
+            #traceback.print_stack()
             return response
 
 class SearchPhotos(Resource):
@@ -225,7 +236,7 @@ class DownloadPhoto(Resource):
             return send_from_directory(GetImageDir(), img_file, as_attachment=True)
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+#app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
 api.add_resource(Home, '/')

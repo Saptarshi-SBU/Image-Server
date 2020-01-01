@@ -2,6 +2,11 @@
 <html>
 <head>
 <style>
+
+a {
+    text-decoration: none;
+}
+
 img { 
     width: 50%; 
 }
@@ -129,7 +134,7 @@ label {
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
                 img_urls += "<div align=center> <font size=+2>" + arr[i].value.tags + "</font> </div>"
-                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" +
+                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" +
                     arr[i].value.uuid + " alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
@@ -170,7 +175,8 @@ label {
             var arr = JSON.parse(xmlhttp.responseText)
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
-                img_urls += "<div align=center> <font size=+2>" + arr[i].value.tags + "</font> </div>"
+                //img_urls += "<div align=center> <font size=+2>" + "ID: " + arr[i].value.uuid + "</font> </div>"
+                img_urls += "<div align=center> <font size=+2> <a href=http://192.168.0.12:4040/api/v1/edit?img=" + arr[i].value.uuid + ">" + "ID : " + arr[i].value.uuid + "</a> </font> </div>"
                 img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" +
                     arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/></div>"
             }

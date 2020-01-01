@@ -17,7 +17,7 @@ def GetImageDir(cfg_file=CONFIG_FILE):
     config.read(cfg_file)
     return config.get("dir", "path")
 
-def GetDateTime(imagePath):
+def GetDateTime2(imagePath):
     fp = open(imagePath, 'rb')
     tags = exifread.process_file(fp)
     fp.close()
@@ -26,12 +26,24 @@ def GetDateTime(imagePath):
     yymmdd = dateinfo[0].replace(':', ' ')
     return [int(s) for s in yymmdd.split(' ')]
 
+def GetDateTime(imagePath):
+    fp = open(imagePath, 'rb')
+    tags = exifread.process_file(fp)
+    fp.close()
+    dateinfo = str(tags['EXIF DateTimeOriginal'])
+    dateinfo = dateinfo.split(' ')
+    yymmdd = dateinfo[0].replace(':', ' ')
+    timeinfo = dateinfo[1].replace(':', ' ')
+    timeinfo = [int(s) for s in timeinfo.split(' ')]
+    secs = timeinfo[0] * 3600 + timeinfo[1] * 60 + timeinfo[2]
+    return [ [int(s) for s in yymmdd.split(' ')], secs ]
+
 def GetDateTimeLocal():
     now = datetime.datetime.now()
     year = now.year
     month = now.month
     day = now.day
-    return [year, month, day]
+    return [year, month, day, 0]
 
 def GetPath(img_uuid):
     img_dir = GetImageDir(CONFIG_FILE)
@@ -56,6 +68,8 @@ def LookupPhotos(like=False):
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         )
         else:               
             result = _dbSession.query(PhotoModel).order_by(
@@ -64,9 +78,11 @@ def LookupPhotos(like=False):
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         )
         for photo in result:
-            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month,
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month,
             photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
     return photoPaths
 
@@ -83,10 +99,12 @@ def GetAlbumPhotos(album):
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         )
 
         for photo in result:
-            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month, \
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
                 photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
             #photoPaths.append(photo.UUID)
         return photoPaths
@@ -113,6 +131,8 @@ def FilterPhotos(start_year, to_year, album=None):
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         )
             result = [ photo for photo in result if photo.Year >= int(start_year) and \
                 photo.Year <= int(to_year) ]
@@ -125,10 +145,12 @@ def FilterPhotos(start_year, to_year, album=None):
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         )
 
         for photo in result:
-            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month, \
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
                 photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
             #photoPaths.append(photo.UUID)
 
@@ -146,23 +168,28 @@ def FilterPhotoAlbums():
                         PhotoModel.Month.desc()
                         ).order_by(
                         PhotoModel.Day.desc()
+                        ).order_by(
+                        PhotoModel.DayTime
                         ).all()
 
     random.shuffle(result)
 
     #unique albums
     for photo in result:
-        photoPaths[photo.Tags] = { \
-                                    "value" : \
-                                        { "uuid"  : photo.UUID, \
-                                          "day"   : photo.Day, \
-                                          "month" : photo.Month, \
-                                          "year"  : photo.Year, \
-                                          "name"  : photo.Name, \
-                                          "tags"  : photo.Tags, \
-                                          "count" : int(0) \
-                                        } \
-                                 }
+        # show only high resolution photos
+        if photo.Name.find("DSC") != -1:
+            photoPaths[photo.Tags] = { \
+                                        "value" : \
+                                            { "uuid"  : photo.UUID, \
+                                              "daytime" : photo.DayTime, \
+                                              "day"   : photo.Day, \
+                                              "month" : photo.Month, \
+                                              "year"  : photo.Year, \
+                                              "name"  : photo.Name, \
+                                              "tags"  : photo.Tags, \
+                                              "count" : int(0) \
+                                            } \
+                                     }
 
     with DBManager() as db:
         _dbSession = db.getSession()
@@ -200,15 +227,16 @@ def InsertPhoto(filename, fileBlob, description):
     os.write(fd, fileBlob)
     os.close(fd)    
     try:
-        [year, month, day] = GetDateTime(imgPath)
+        [[year, month, day], secs] = GetDateTime(imgPath)
     except:
-        [year, month, day] = GetDateTimeLocal()
+        [year, month, day, secs] = GetDateTimeLocal()
 
     with DBManager() as db: 
         _dbSession = db.getSession()
         DBAddPhoto(_dbSession, img_uuid, filename, digest, \
-            year, month, day, img_dir, " ", description)
+            year, month, day, secs, img_dir, " ", description)
         _dbSession.commit()
+    print ('{} saved to disk'.format(filename))
 
 def MarkPhotoFav(img_uuid, like=True):    
     with DBManager() as db: 
@@ -246,3 +274,19 @@ def AutoCompleteAlbum(text):
         for value in _dbSession.query(PhotoModel.Tags).distinct():
             tl.append(value[0].lower())
     return AutoComplete(tl, text)
+
+def ScanPhotos():
+    photoPaths = {}
+    photoList = []
+    result = []
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        result = _dbSession.query(PhotoModel).order_by(
+                        PhotoModel.Year.desc()
+                        ).order_by(
+                        PhotoModel.Month.desc()
+                        ).order_by(
+                        PhotoModel.Day.desc()
+                        ).all()
+    for i in result:
+        print i

@@ -39,12 +39,13 @@ class PhotoModel(Base):
     Location = Column(String(stringLen), nullable=False)
     Tags = Column(String(stringLen), nullable=True)
     Reserved = Column(String(stringLen), nullable=True)
+    DayTime = Column(Integer, nullable=False)
 
     def __repr__(self):
         return "<%s(UUID : %s, Name :%s Digest :%s Year : %d, Month : %d " \
-            "Day : %d NameSpace : %s Loc : %s Tags :%s)" % (self.__tablename__, \
-            self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace,
-            self.Location, self.Tags)
+            "Day : %d NameSpace : %s Loc : %s Tags :%s Daytime :%d)" % (self.__tablename__, \
+            self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
+            self.Location, self.Tags, self.DayTime)
 
 # Model Queries
 def DBGetPhotos(_dbSession):
@@ -60,7 +61,7 @@ def DBGetPhoto(_dbSession, imgUUID):
     return _dbSession.query(PhotoModel).filter \
         (PhotoModel.UUID==UUID).first()
 
-def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, NameSpace, Location='', Tags=''):
+def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, DayTime, NameSpace, Location='', Tags=''):
     """
         insert record
     """
@@ -72,7 +73,8 @@ def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, NameSpace, Loca
                        Day=Day, \
                        NameSpace=NameSpace, \
                        Location=Location, \
-                       Tags=Tags)
+                       Tags=Tags, \
+                       DayTime=DayTime)
     _dbSession.add(photo)
     return photo
 

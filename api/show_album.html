@@ -33,8 +33,9 @@ img {
             console.log('\nlog: ' + arr)
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
-                img_urls += "<div align=center> <font size=+2> <a href=http://192.168.0.12:4040/api/v1/edit?img=" + arr[i].value.uuid + ">" + "ID :" + arr[i].value.uuid + "</a> </font> </div>"
-                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid + " alt=centered image/></div>"
+                img_urls += "<div align=center> <font size=+2> <a href=http://192.168.0.12:4040/api/v1/edit?img=" + arr[i].value.uuid + ">" + "ID : " + arr[i].value.uuid + "</a> </font> </div>"
+                //img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid + " alt=centered image/></div>"
+                img_urls += "<div><img class=marginauto src=http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
         }

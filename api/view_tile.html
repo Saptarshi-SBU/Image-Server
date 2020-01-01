@@ -2,12 +2,20 @@
 <html>
 <head>
 <style>
-img { 
-    width: 60%; 
+
+a {
+    text-decoration: none;
 }
-.marginauto {
-    //margin: 10px auto 20px;
-    display: none;
+
+/* Clear floats after the columns */
+.row:after {
+      content: "";
+      display: table;
+      clear: both;
+}
+
+img { 
+    width: 98%; 
 }
 
 .marginauto2 {
@@ -17,66 +25,91 @@ img {
 
 .column {
       float: left;
-      width: 30%;
-      padding: 5px;
-      display: none;
+      width: 33%;
+      padding: 1px;
+      display: table;
 }
 
 </style>
 </head>
 
+<body>
+<div align="center" style="font-size: 32px;" >
+    <br> My Albums </br>
+</div>
+
 <p id="demo"></p>
 
-<input id="action" class=marginauto2 type="button" value="Next" onclick="run()" style="height: 120px; width: 240px;font-size: 64px;" ></input>
-<div ><img id="img1" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img2" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img3" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img4" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img5" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img6" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img7" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img8" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
-<div ><img id="img9" class="column" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"> </div>
+<input id="action" class=marginauto2 type="button" value="Show more" onclick="run_next()" style="height: 32px; width:240px;font-size: 24px;" ></input>
+<div class="row">
+    <div class="column"><h2><img id="img1" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label1"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img2" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label2"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img3" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label3"> <font size=32px>Text</font></label></p> </div>
+</div> 
 
+<div class="row">
+    <div class="column"><h2><img id="img4" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label4"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img5" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label5"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img6" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label6"> <font size=32px>Text</font></label></p> </div>
+</div>
 
-<!--
-<div ><img id="img1" class="marginauto" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"></div>
-<div ><img id="img2" class="marginauto" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"></div>
-<div ><img id="img3" class="marginauto" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"></div>
-<div ><img id="img4" class="marginauto" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"></div>
-<div ><img id="img5" class="marginauto" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered"></div>
--->
+<div class="row">
+    <div class="column"><h2><img id="img7" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label7"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img8" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label8"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img9" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label9"> <font size=32px>Text</font></label></p> </div>
+</div>
 
 <script>
 
 var arr;
-var count = 1;
+var next = 1;
 
-function run() {
-    var c = 1
-    for (var i = count; i < count + 9; i++) {
+function run_next() {
+    var i = 0;
+
+    if (next >= arr.length)
+        return;
+
+    for (i = next, k = 1; i < next + 9; i++, k++) {
         if (i < arr.length) {
-            console.log("img"+ c)
-            newimg = document.getElementById("img" + c)
-            newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[i].value.uuid
-            newimg.style.display = "block";
-            c = c + 1
+            console.log("img"+ k)
+            newimg = document.getElementById("img" + k)
+            newimg.src = "http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+            //newimg.src = "http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px";
+            newimg.style.display = "table";
+            text = arr[i].value.tags
+            image = encodeURIComponent(text)
+            label = document.getElementById('label' + k);
+            label.innerHTML = "Album : <a href=http://192.168.0.12:4040/api/v1/myalbum?img=" + image + ">" + arr[i].value.tags + "</a>" + " (" +  arr[i].value.count + ")"
+        } else {
+            newimg = document.getElementById("img" + k)
+            newimg.style.display = "none"
+            label = document.getElementById('label' + k);
+            label.innerHTML = ""
         }
     }
-    count = count + 9
+    next = i
 }
 
-xmlhttp = new XMLHttpRequest();
-xmlhttp.onreadystatechange = function() {
-    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
+function run_albumsearch() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             arr = JSON.parse(xmlhttp.responseText)
-    } else {
-        console.log(this.status)
-    }
-};
-xmlhttp.open("GET", "http://192.168.0.12:4040/api/v1/listphotos", true);
-xmlhttp.send();
+            console.log('\nlog: ' + arr.length)
+            console.log('\nlog: ' + arr)
+            run_next()
+        }
+    };
+    xmlhttp.open("POST", 'http://192.168.0.12:4040/api/v1/myalbums');
+    xmlhttp.send();
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+     run_albumsearch();
+});
+
 </script>
+</body>
 
 </html>

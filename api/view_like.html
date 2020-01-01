@@ -39,7 +39,7 @@ img {
 
 <div class="w3-content">
   <figure>
-  <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+  <img class="marginauto" id="img" src="http://192.168.0.12:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
   <div class="marginauto_cap"> <figcaption id="icaption">Image Description </figcaption> </div>
   </figure>
   <div class="marginauto_cap">
@@ -65,7 +65,7 @@ var next_index = 0;
 function run_next() {
     var total = arr.length
     newimg = document.getElementById("img")
-    newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
+    newimg.src = "http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
     newcap = document.getElementById("icaption")
@@ -83,7 +83,7 @@ function run_prev() {
     next_index = next_index - 1;
     if (next_index < 0)
         next_index = arr.length - 1;
-    newimg.src = "http://192.168.0.12:4040/api/v1/rawphoto?img=" + arr[next_index].value.uuid
+    newimg.src = "http://192.168.0.12:4040/api/v1/scaledphoto?img=" + arr[next_index].value.uuid
     newimg.title = arr[next_index].value.name + "(" + arr[next_index].value.date + ")"
     newimg.style.display = "block";
     newcap = document.getElementById("icaption")
