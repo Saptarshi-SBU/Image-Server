@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+a {
+    text-decoration: none;
+}
+
+img { 
+    width: 50%; 
+}
+.marginauto {
+    margin: 20px auto 20px;
+    display: block;
+}
+label {
+    font-size: 32px;
+}
+
+/*the container must be positioned relative:*/
+.autocomplete {
+  position: relative;
+  //display: inline-block;
+}
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9; 
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important; 
+  color: #ffffff; 
+}
+
+</style>
+</head>
+
+<style type="text/css">
+       a:link {color: blue;}      /* unvisited link */
+       a:visited {color: blue;}   /* visited link */
+       a:hover {color: blue;}     /* mouse over link */
+       a:active {color: blue;}    /* selected link */
+</style>
+
+<!-- <body bgcolor="#A9A9A9"> -->
+<body>
+
+<div align="center" style="font-size: 20px;" >
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/">Home</a>
+</div>
+
+<div align="center" style="font-size: 32px;" >
+    <br> Welcome to Photo Gallery Search </br>
+</div>    
+
+<form autocomplete="off" id='file-catcher'>
+
+<!--
+  <div  align="center"> 
+    <label for="From"> Year </label>
+    <input id='from-year-input' name='from-year' type='text' style ="font-size: 32px;"> </input>
+    <input id='to-year-input'   name='to-year'   type='text' style ="font-size: 32px;"> </input>
+  </div>
+-->
+
+  <br> </br>
+
+  <!--<div class='autocomplete' align="center"> -->
+  <div class="autocomplete" align="left">
+    <br>
+    <label for="Album" style ="font-size: 24px;">Album </label>
+    <input id='album-input'  name='album' type='text' style ="font-size: 24px;" > </input>
+<!--
+    <label for="From"> Year </label>
+    <input id='from-year-input' name='from-year' type='text' style ="width: 64px; font-size: 32px;"> </input>
+    <input id='to-year-input'   name='to-year'   type='text' style ="width: 64px; font-size: 32px;"> </input>
+  </div>
+
+  <br> </br>
+
+  <div  align="center">
+    <label for="Submit"> Search</label>
+    <button id='query-album-button' type='button' value="ShowAlbums" onclick="run_albumsearch()" style="
+    width: 256px; font-size: 24px;">
+    ShowAlbums
+    </button>
+-->  
+    <button id='query-button' type='submit' name="query" onclick="run_photosearch()" style="height: 64px width: 152px;
+    font-size: 24px; background-color: DodgerBlue; color: #fff;">
+    SearchPhotos
+    </button>
+    <button id='clear-button' type='submit' name="clear" onclick="run_reset()" style="height: 64px width: 152px;
+    font-size: 24px; background-color: DodgerBlue; color: #fff;">
+    Clear
+    </button>
+<!--    <input id="action" type="button" value="Clear" onclick="run_reset()" style ="font-size: 16px" ></input> -->
+    </br>
+<!--  </div> -->
+</form>
+
+<p id='from-year-input' name='from-year'> </p>
+<p id='to-year-input'   name='to-year'> </p>
+
+<script type="text/javascript">
+  function run_reset() {
+    var from_year = document.getElementById('from-year-input');
+    var to_year = document.getElementById('to-year-input');
+    var album = document.getElementById('album-input');
+
+    from_year.value = ''
+    to_year.value = ''
+    album.value = ''
+    document.getElementById("demo").innerHTML = ""
+  }
+
+  function run_albumsearch() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            var txt = ""
+            var img_urls = ""
+            var arr = JSON.parse(xmlhttp.responseText)
+            console.log('\nlog: ' + arr.length)
+            for (var i in arr) {
+                img_urls += "<div align=center> <font size=+2>" + arr[i].value.tags + "</font> </div>"
+                img_urls += "<div><img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" +
+                    arr[i].value.uuid + " alt=centered image/></div>"
+            }
+            document.getElementById("demo").innerHTML = img_urls;
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/searchalbums');
+    xmlhttp.send();
+  }
+</script>  
+
+<p id="demo"></p>
+
+<script>
+ function run_photosearch() {
+  var from_year = document.getElementById('from-year-input');
+  var to_year = document.getElementById('to-year-input');
+  var album = document.getElementById('album-input');
+  var fileCatcher = document.getElementById('file-catcher');
+  
+  var sendFile;
+
+  fileCatcher.addEventListener('submit', function (evnt) {
+    evnt.preventDefault();
+    sendFile();
+  });
+  
+  sendFile = function () {
+    var formData = new FormData();
+    formData.set('from_year', from_year.value);
+    formData.set('to_year',   to_year.value);
+    formData.set('album',     album.value);
+
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            var txt = ""
+            var img_urls = ""
+            var arr = JSON.parse(xmlhttp.responseText)
+            console.log('\nlog: ' + arr.length)
+            for (var i in arr) {
+                //img_urls += "<div align=center> <font size=+2>" + "ID: " + arr[i].value.uuid + "</font> </div>"
+                img_urls += "<div align=center> <font size=+2> <a href=http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid + ">" + "ID : " + arr[i].value.uuid + "</a> </font> </div>"
+                img_urls += "<div><img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" +
+                    arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/></div>"
+            }
+            document.getElementById("demo").innerHTML = img_urls;
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/search');
+    xmlhttp.send(formData);
+    console.log('sending album ' + album.value)
+  };
+}
+</script>
+
+<script>
+function autocomplete(inp, arr) {
+  /*the autocomplete function takes two arguments,
+  the text field element and an array of possible autocompleted values:*/
+  var currentFocus;
+  /*execute a function when someone writes in the text field:*/
+  inp.addEventListener("input", function(e) {
+      var a, b, i, val = this.value;
+      /*close any already open lists of autocompleted values*/
+      closeAllLists();
+      if (!val) { return false;}
+      currentFocus = -1;
+      console.log(val);
+      /*create a DIV element that will contain the items (values):*/
+      a = document.createElement("DIV");
+      a.setAttribute("id", this.id + "autocomplete-list");
+      a.setAttribute("class", "autocomplete-items");
+      /*append the DIV element as a child of the autocomplete container:*/
+      this.parentNode.appendChild(a);
+      /*for each item in the array...*/
+      process_autocomplete = function (subtext) {
+        var xmlhttp  = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                var arr = JSON.parse(xmlhttp.responseText)
+                for (i = 0; i < arr.length; i++) {
+                    console.log('\nlog: ' + arr[i])
+                    /*check if the item starts with the same letters as the text field value:*/
+                    //if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                    if (1) {
+                      /*create a DIV element for each matching element:*/
+                      b = document.createElement("DIV");
+                      /*make the matching letters bold:*/
+                      b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+                      b.innerHTML += arr[i].substr(val.length);
+                      /*insert a input field that will hold the current array item's value:*/
+                      b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                      /*execute a function when someone clicks on the item value (DIV element):*/
+                      b.addEventListener("click", function(e) {
+                          /*insert the value for the autocomplete text field:*/
+                          inp.value = this.getElementsByTagName("input")[0].value;
+                          /*close the list of autocompleted values,
+                          (or any other open lists of autocompleted values:*/
+                          closeAllLists();
+                      });
+                      a.appendChild(b);
+                    }
+                }
+            }
+        };
+        xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/autocomplete');
+        xmlhttp.send(subtext);
+      };
+
+      process_autocomplete(val);
+  });
+
+  /*execute a function presses a key on the keyboard:*/
+  inp.addEventListener("keydown", function(e) {
+      var x = document.getElementById(this.id + "autocomplete-list");
+      if (x) x = x.getElementsByTagName("div");
+      if (e.keyCode == 40) {
+        /*If the arrow DOWN key is pressed,
+        increase the currentFocus variable:*/
+        currentFocus++;
+        /*and and make the current item more visible:*/
+        addActive(x);
+      } else if (e.keyCode == 38) { //up
+        /*If the arrow UP key is pressed,
+        decrease the currentFocus variable:*/
+        currentFocus--;
+        /*and and make the current item more visible:*/
+        addActive(x);
+      } else if (e.keyCode == 13) {
+        /*If the ENTER key is pressed, prevent the form from being submitted,*/
+        e.preventDefault();
+        if (currentFocus > -1) {
+          /*and simulate a click on the "active" item:*/
+          if (x) x[currentFocus].click();
+        }
+      }
+  });
+
+function addActive(x) {
+    /*a function to classify an item as "active":*/
+    if (!x) return false;
+    /*start by removing the "active" class on all items:*/
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    /*add class "autocomplete-active":*/
+        x[currentFocus].classList.add("autocomplete-active");
+}
+
+function removeActive(x) {
+    /*a function to remove the "active" class from all autocomplete items:*/
+   for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("autocomplete-active");
+   }
+}
+
+function closeAllLists(elmnt) {
+    /*close all autocomplete lists in the document,
+    except the one passed as an argument:*/
+    var x = document.getElementsByClassName("autocomplete-items");
+    for (var i = 0; i < x.length; i++) {
+      if (elmnt != x[i] && elmnt != inp) {
+        x[i].parentNode.removeChild(x[i]);
+      }
+    }
+  }
+  /*execute a function when someone clicks in the document:*/
+  document.addEventListener("click", function (e) {
+      closeAllLists(e.target);
+  });
+}
+var countries = [ "india" ];
+autocomplete(document.getElementById("album-input"), countries);
+</script>
+</body>
+</html>

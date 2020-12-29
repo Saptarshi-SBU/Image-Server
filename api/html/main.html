@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="http://$SERVER_HOST_IP:4040/api/v1/favicon.ico" type="image/x-icon"/>
+<link rel="shortcut icon" href="http://$SERVER_HOST_IP:4040/api/v1/favicon.ico" type="image/x-icon"/>
+
+<style>
+
+a {
+    text-decoration: none;
+}
+
+.center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 50%;
+}
+html { 
+      background: url(http://$SERVER_HOST_IP:4040/api/v1/welcome) no-repeat center center fixed; 
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+}
+</style>
+
+<style type="text/css">
+       a:link {color: blue;}      /* unvisited link */
+       a:visited {color: blue;}   /* visited link */
+       a:hover {color: blue;}     /* mouse over link */
+       a:active {color: blue;}    /* selected link */
+</style>
+
+<body>
+<div align="center" style="font-size: 20px;" >
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/view">Albums</a>
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/auto">Favourites</a>
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/upload">Upload</a>
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/search">Search</a>
+    <!-- <a href="http://$SERVER_HOST_IP:4040/api/v1/auto">SlideShow</a></p> -->
+</div> 
+<p id="quoteid" style="font-size: 24px; text-align:center;"><font> Find your inspiration today!</font></p>
+
+<script>
+var quotes = [
+    "Thousands of tired, nerve-shaken, over-civilized people are beginning to find out that going to the mountains is going home; that wildness is a necessity - John Muir",
+
+    "In every walk with Nature one receives far more than he seeks - John Muir",
+
+    "None of Nature’s landscapes are ugly so long as they are wild - John Muir",
+
+    "Keep close to Nature’s heart … and break clear away, once in a while, and climb a mountain or spend a week in the woods. Wash your spirit clean - John Muir",
+
+    "There is a love of wild Nature in everybody, an ancient mother-love ever showing itself whether recognized or no, and however covered by cares and duties - John Muir",
+
+    "The clearest way into the Universe is through a forest wilderness. -John Muir",
+
+];
+
+function choose_quote() {
+    var i = Math.ceil(Math.random() * 10) % quotes.length;
+    newquote = document.getElementById("quoteid")
+    newquote.innerHTML = "<i><font color=blue face=georgia> " +  quotes[i] + "</font></i>"
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+     choose_quote();
+});
+</script>
+</body>
+</html>

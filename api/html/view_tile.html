@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+a {
+    text-decoration: none;
+}
+
+/* Clear floats after the columns */
+.row:after {
+      content: "";
+      display: table;
+      clear: both;
+}
+
+img { 
+    width: 98%; 
+}
+
+.marginauto2 {
+    margin: 10px auto 20px;
+    display: block;
+}
+
+.column {
+      float: left;
+      width: 33%;
+      padding: 1px;
+      display: table;
+}
+
+</style>
+</head>
+
+<style type="text/css">
+       a:link {color: blue;}      /* unvisited link */
+       a:visited {color: blue;}   /* visited link */
+       a:hover {color: blue;}     /* mouse over link */
+       a:active {color: blue;}    /* selected link */
+</style>
+
+<body>
+<div align="center" style="font-size: 24px;" >
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/">Home</a>
+</div>
+
+<div align="center" style="font-size: 32px;" >
+    <br> My Albums </br>
+</div>
+
+<p id="demo"></p>
+
+<div class="row">
+    <div class="column"><h2><img id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label1"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label2"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label3"> <font size=32px>Text</font></label></p> </div>
+</div> 
+
+<div class="row">
+    <div class="column"><h2><img id="img4" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label4"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img5" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label5"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img6" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label6"> <font size=32px>Text</font></label></p> </div>
+</div>
+
+<div class="row">
+    <div class="column"><h2><img id="img7" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label7"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img8" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label8"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img9" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label9"> <font size=32px>Text</font></label></p> </div>
+</div>
+<input id="action" class=marginauto2 type="button" value="more" onclick="run_next()" style="height: 32px;
+     width:96px;font-size: 16px;"></input>
+
+<script>
+
+var arr;
+var next = 0;
+
+function run_next() {
+    var i = 0;
+
+    if (next >= arr.length)
+        return;
+
+    for (i = next, k = 1; i < next + 9; i++, k++) {
+        if (i < arr.length) {
+            console.log("img"+ k)
+            newimg = document.getElementById("img" + k)
+            newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+            //newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px";
+            newimg.style.display = "table";
+            text = arr[i].value.tags
+            image = encodeURIComponent(text)
+            label = document.getElementById('label' + k);
+            label.innerHTML = "Album : <a href=http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=" + image + ">" + arr[i].value.tags + "</a>" + " (" +  arr[i].value.count + ")"
+            console.log('\nlog: ' + text)
+        } else {
+            newimg = document.getElementById("img" + k)
+            newimg.style.display = "none"
+            label = document.getElementById('label' + k);
+            label.innerHTML = ""
+        }
+    }
+    next = i
+}
+
+function run_albumsearch() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            arr = JSON.parse(xmlhttp.responseText)
+            console.log('\nlog: ' + arr.length)
+            console.log('\nlog: ' + arr)
+            run_next()
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbums');
+    xmlhttp.send();
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+     run_albumsearch();
+});
+
+</script>
+</body>
+
+</html>

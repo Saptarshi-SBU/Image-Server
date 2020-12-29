@@ -2,21 +2,26 @@
     python module for image hosting
 '''
 import os
-import cv2
 import json
+import time
 import gc
 import objgraph
 import uuid
 import time
 import datetime
 import urllib
+import traceback
+import flask
 from functools import wraps, update_wrapper
-from DB import InitPhotosDb
-from imgApp import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetImageDir
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory
-import traceback
+from db.DB import InitPhotosDb
+from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+    UpdatePhotoTag, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetImageDir, GetHostIP, GetScaledImage
+from image_processing.filtering import ProcessImage
+
+#configured via api.cfg
+HOST_ADDRESS = GetHostIP()
 
 def nocache(view):
     @wraps(view)
@@ -30,27 +35,35 @@ def nocache(view):
         
     return update_wrapper(no_cache, view)
 
-def ProcessImage(filepath, scale_percent=25):
-        img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
-        width  = int(img_data.shape[1] * scale_percent / 100)
-        height = int(img_data.shape[0] * scale_percent / 100)
-        dim = (width, height)
-        img_scal = cv2.resize(img_data, dim, interpolation=cv2.INTER_LINEAR)
-        _, img_encoded = cv2.imencode('.jpg', img_scal) # encode converts to bytes
-        return img_encoded.tostring()
-
 class Home(Resource):
 
     def get(self):
-        return send_file('{}'.format('main.html'))
+        #time.sleep(1)
+	with open('api/html/main.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
+        #return send_file('{}'.format('main.html'))
         #return {"message": "Welcome to Sen Family's Image Server"}
 
 class WelcomeBanner(Resource):
 
     def get(self):
-        response = make_response(ProcessImage('api/welcome_2.0.jpg'))
+        response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
         response.headers.set('Content-Type', 'image/jpg')
         return response
+
+class Favicon(Resource):
+
+    def get(self):
+        return send_file('{}'.format('images/favicon.ico'))
+
+class FaviconApple(Resource):
+
+    def get(self):
+        return send_file('{}'.format('images/apple-touch-icon-152x152.png'))
 
 class GetPhotoRaw(Resource):
 
@@ -70,8 +83,17 @@ class GetPhotoScaled(Resource):
         if img_uuid is None:
             return abort(400)
         else:
-            response = make_response(ProcessImage(GetPath(img_uuid)))
+            scale_pc = request.args.get('scale')
+            if scale_pc is None:
+                response = make_response(ProcessImage(GetPath(img_uuid)))
+            else:
+		frame = GetScaledImage(img_uuid)
+		if frame:
+		    response = make_response(frame)
+		else:
+                    response = make_response(ProcessImage(GetPath(img_uuid), int(scale_pc)))
             response.headers.set('Content-Type', 'image/jpg')
+            #response.headers.set('Content-Type', 'image/png')
             return response
 
 class ListPhotos(Resource):
@@ -97,16 +119,21 @@ class ListLikePhotos(Resource):
 class ViewPhotos(Resource):
 
     def get(self):
-            return send_file("view_tile.html")
-            #return send_file("show_albums.html")
+	    with open('api/html/view_tile.html', 'r') as fp:
+                data = fp.read()
+		data= data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
 class EditPhotos(Resource):
 
     def get(self):
             img_album = urllib.unquote(request.args.get('img'))
-            with open('api/edit_photo.html', 'r') as fp:
+            with open('api/html/edit_photo.html', 'r') as fp:
                 data = fp.read()
                 data = data.replace("ca509b27-cd33-45ab-9d71-6e1e2df48b09", str(img_album))
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
                 response = make_response(data)
                 response.headers.add('Access-Control-Allow-Origin', '*')
                 return response
@@ -114,20 +141,32 @@ class EditPhotos(Resource):
 class ViewPhotosAuto(Resource):
 
     def get(self):
-            html = "slide_view.html"
-            return send_file('{}'.format(html))
+	    with open('api/html/slide_view.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
 class ViewLikedPhotos(Resource):
 
     def get(self):
-            html = "view_like.html"
-            return send_file('{}'.format(html))
+    	    with open('api/html/view_like.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
 class UploadPhotos(Resource):
 
     def get(self):
-            html = "upload_album.html"
-            return send_file('{}'.format(html))
+	    with open('api/html/upload_album.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
     def post(self):
             #print type(request.files['file'])
@@ -142,8 +181,12 @@ class UploadPhotos(Resource):
 class SearchPhotos(Resource):
 
     def get(self):
-            html = "search_photos.html"
-            return send_file('{}'.format(html))
+	    with open('api/html/search_photos.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
 
     def post(self):
             print request.form['from_year']
@@ -160,6 +203,7 @@ class GetMyAlbums(Resource):
     def post(self):
             result = FilterPhotoAlbums()
             result = json.dumps(result)
+            #print result
             response = make_response(result)
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
@@ -168,11 +212,11 @@ class GetMyAlbum(Resource):
 
     def get(self):
             img_album = urllib.unquote(request.args.get('img'))
-            with open('api/show_album.html', 'r') as fp:
+            with open('api/html/show_album.html', 'r') as fp:
                 data = fp.read()
                 data = data.replace("album_value", str(img_album))
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
                 response = make_response(data)
-                #print data
                 response.headers.add('Access-Control-Allow-Origin', '*')
                 return response
 
@@ -235,11 +279,16 @@ class DownloadPhoto(Resource):
             img_file = '{}.JPG'.format(img_uuid)
             return send_from_directory(GetImageDir(), img_file, as_attachment=True)
 
+def page_not_found(e):
+  return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
+
 app = Flask(__name__)
 #app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 api_blueprint = Blueprint('api', __name__)
 api = Api(api_blueprint)
 api.add_resource(Home, '/')
+api.add_resource(Favicon, '/favicon.ico')
+api.add_resource(FaviconApple, '/favicon.apple')
 api.add_resource(ViewPhotos, '/view')
 api.add_resource(ViewPhotosAuto, '/auto')
 api.add_resource(ViewLikedPhotos, '/viewlike')
@@ -260,5 +309,6 @@ api.add_resource(UnlikePhoto, '/unlikephoto')
 api.add_resource(UpdatePhoto, '/updatephoto')
 api.add_resource(DownloadPhoto, '/downloadphoto')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
+app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
 InitPhotosDb()
