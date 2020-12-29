@@ -5,6 +5,7 @@ import sys
 sys.path.append("..")
 import db.DB
 from db.DB import DBManager, PhotoModel
+from db.query import GetMediumScaledImageDir
 from db.dbconf import *
 from image_processing.filtering import ProcessImage, TestImageSizeRatio
 
@@ -87,7 +88,7 @@ def ConvertPhotosMediumMultiThreaded(result, r_start, r_end, new_path):
 	   print ('completed :{}% thread:{}'.format((k * 100)/n, threading.currentThread().getName()))
 
 def ScannerDriver(num_threads):
-	new_path = "/mnt/target/photos_medium/"
+	new_path = GetMediumScaledImageDir()
 	if not os.path.exists(new_path):
 	    os.mkdir(new_path)
 	if num_threads == 1:

@@ -24,6 +24,11 @@ def GetImageDir(cfg_file=CONFIG_FILE):
     config.read(cfg_file)
     return config.get("dir", "path")
 
+def GetMediumScaledImageDir(cfg_file=CONFIG_FILE):
+    config = ConfigParser.ConfigParser()
+    config.read(cfg_file)
+    return config.get("m_dir", "path")
+
 def GetDateTime2(imagePath):
     fp = open(imagePath, 'rb')
     tags = exifread.process_file(fp)
