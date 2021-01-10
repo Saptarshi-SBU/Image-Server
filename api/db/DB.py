@@ -47,6 +47,18 @@ class PhotoModel(Base):
             self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
             self.NameSpace_Medium, self.Tags, self.DayTime)
 
+class UserModel(Base):
+    """
+       arep session table for session information from replicator
+    """
+    __tablename__ = 'UserTable'
+    UUID = Column(String(uuidLen), nullable=False)
+    Username = Column(String(stringLen), primary_key=True)
+    Password = Column(String(stringLen), nullable=False)
+
+    def __repr__(self):
+        return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
+
 # Model Queries
 def DBGetPhotos(_dbSession):
     """

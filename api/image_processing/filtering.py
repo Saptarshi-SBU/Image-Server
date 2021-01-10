@@ -19,7 +19,10 @@ def ProcessImage(filepath, scale_percent=15):
         height = int(img_data.shape[0])
         width  = int(img_data.shape[1])
 	img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
-        _, img_encoded = cv2.imencode('.jpg', img_frame) # encode converts to bytes
+	img_frame = cv2.pyrDown(img_frame)
+	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        _, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
         return img_encoded.tostring()
 
 def TestImageSizeRatio(filepath):
@@ -30,5 +33,7 @@ def TestImageSizeRatio(filepath):
         height = int(img_data.shape[0])
         width  = int(img_data.shape[1])
 	img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
-        _, img_encoded = cv2.imencode('.jpg', img_frame) # encode converts to bytes
+	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        _, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
         return img_data.size, img_encoded.size

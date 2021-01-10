@@ -1,13 +1,14 @@
+#
+# resizes images by downsampling
+# python -m api.scanners.img_resizing_daemon
+#
 import os
 import time
 import threading
-import sys
-sys.path.append("..")
-import db.DB
-from db.DB import DBManager, PhotoModel
-from db.query import GetMediumScaledImageDir
-from db.dbconf import *
-from image_processing.filtering import ProcessImage, TestImageSizeRatio
+from ..db.DB import DBManager, PhotoModel
+from ..db.query import GetMediumScaledImageDir
+from ..db.dbconf import *
+from filtering import ProcessImage, TestImageSizeRatio
 
 def CheckConvertScalingSavings():
 	with DBManager() as db: 
@@ -16,15 +17,16 @@ def CheckConvertScalingSavings():
 	    curr_lat = 0
 	    org_size = 0
 	    cur_size = 0
-	    n = len(result)
-	    print ('total records :{}'.format(n))
 	    _dbSession = db.getSession()
 	    result = _dbSession.query(PhotoModel).all()
+	    n = len(result)
+	    print ('total records :{}'.format(n))
 	    for r in result:
 		k += 1
 		imgPath = '{}{}.JPG'.format(r.NameSpace, r.UUID)
 		start = time.time()
 		org, red = TestImageSizeRatio(imgPath)
+		print org, red
 		end = time.time()
 		win.append([org, red, end - start])
 		curr_lat += win[-1][2]
@@ -37,7 +39,7 @@ def CheckConvertScalingSavings():
 		    cur_size -= win[0][1]
 		    org_size -= win[0][0]
 		    win.pop(0)
-	    _dbSession.commit()
+	    #_dbSession.commit()
 
 def ConvertPhotosMediumSingleThreaded(new_path):
 	with DBManager() as db: 
@@ -47,10 +49,10 @@ def ConvertPhotosMediumSingleThreaded(new_path):
 	    n = len(result)
 	    print ('total records :{}'.format(n))
 	    for r in result:
-		if len(r.NameSpace_Medium) > 1:
-		    continue
+		#if len(r.NameSpace_Medium) > 1:
+		#    continue
 		k += 1
-		imgPath = '{}{}.JPG'.format(r.NameSpace, r.UUID)
+		imgPath = '{}/{}.JPG'.format(r.NameSpace, r.UUID)
 		data = ProcessImage(imgPath)
 		imgPath2 = '{}{}_m.JPG'.format(new_path, r.UUID)
 		fd = os.open(imgPath2, os.O_CREAT | os.O_RDWR)
@@ -58,6 +60,7 @@ def ConvertPhotosMediumSingleThreaded(new_path):
 		   num_bytes = os.write(fd, data)
 		   if len(data) == num_bytes:
 		      r.NameSpace_Medium = new_path
+		      print num_bytes, imgPath2
 		   else:
 		      print 'processed file write does not match expected bytes'
 		os.close(fd)
@@ -107,4 +110,5 @@ def ScannerDriver(num_threads):
 		    t.join()    
 		_dbSession.commit()
 
+#CheckConvertScalingSavings()
 ScannerDriver(1)

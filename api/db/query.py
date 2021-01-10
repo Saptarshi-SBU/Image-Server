@@ -6,11 +6,9 @@ import exifread
 import ConfigParser
 from sqlalchemy import func
 from sqlalchemy import and_
-import sys
-sys.path.append("..")
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
-from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel
+from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, UserModel
 
 CONFIG_FILE="/etc/api.cfg"
 
@@ -126,10 +124,10 @@ def FilterPhotos(start_year, to_year, album=None):
     result = []
 
     #check unicode
-    if not start_year.isnumeric():
+    if not isinstance(start_year, int) and not start_year.isnumeric():
         start_year = 0
 
-    if not to_year.isnumeric():
+    if not isinstance(to_year, int) and not to_year.isnumeric():
         to_year = 2050
 
     with DBManager() as db: 
@@ -211,7 +209,6 @@ def FilterPhotoAlbums():
 
     photoList.sort(key=SortbyDate, reverse=True)
     return photoList
-
 
 def TestDuplicate(sourceBlob, digest):
     with DBManager() as db: 
@@ -308,8 +305,28 @@ def GetScaledImage(img_uuid):
     with DBManager() as db: 
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
-	if len(result.NameSpace_Medium) > 1:
-    		imgPath = '{}{}_m.JPG'.format(result.NameSpace_Medium, result.UUID)
-		with open(imgPath, 'r') as f:
-		    img_data = f.read()
+	for r in result:
+		if len(r.NameSpace_Medium) > 1:
+    			#imgPath = '{}{}_m.JPG'.format(result.NameSpace_Medium, result.UUID)
+    			imgPath = '{}{}_m.JPG'.format("/mnt/target/photos_small/", r.UUID)
+			with open(imgPath, 'r') as f:
+		    		img_data = f.read()
     return img_data
+
+def LookupUser(username, password):
+    with DBManager() as db:
+        _dbSession = db.getSession()
+	result = _dbSession.query(UserModel).filter(UserModel.Username==username).first()
+	if result:
+		return result.Password == password
+	else:
+		return False
+
+def AddUser(username, password):
+    user_uuid = uuid.uuid4()
+    user = UserModel(UUID=user_uuid, Username=username, Password=password)
+    with DBManager() as db:
+        _dbSession = db.getSession()
+    	_dbSession.add(user)
+	_dbSession.commit()
+    return user
