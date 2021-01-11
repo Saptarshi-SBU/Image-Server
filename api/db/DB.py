@@ -47,6 +47,17 @@ class PhotoModel(Base):
             self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
             self.NameSpace_Medium, self.Tags, self.DayTime)
 
+class LabelModel(Base):
+    """
+       photo labels
+    """
+    __tablename__ = 'LabelTable'
+    UUID = Column(String(uuidLen), primary_key=True)
+    Labels = Column(String(stringLen), nullable=False)
+
+    def __repr__(self):
+        return "<%s(UUID : %s, Labels : %s)>" % (self.UUID, self.Labels)
+
 class UserModel(Base):
     """
        arep session table for session information from replicator

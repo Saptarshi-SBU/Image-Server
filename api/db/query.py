@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy import and_
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
-from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, UserModel
+from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel
 
 CONFIG_FILE="/etc/api.cfg"
 
@@ -312,6 +312,27 @@ def GetScaledImage(img_uuid):
 			with open(imgPath, 'r') as f:
 		    		img_data = f.read()
     return img_data
+
+def DBGetPhotoLabel(imgUUID):
+    """
+        fetch a row for the imgUUID
+    """
+    entry = None
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        entry =  _dbSession.query(LabelModel).filter(LabelModel.UUID==imgUUID).first()
+    return entry.Labels if entry else None
+
+def DBAddPhotoLabel(imgUUID, imgLabels):
+    """
+        insert record
+    """
+    entry = LabelModel(UUID=imgUUID, Labels=imgLabels)
+    with DBManager() as db: 
+        _dbSession = db.getSession()
+        _dbSession.add(entry)
+	_dbSession.commit()
+    return entry
 
 def LookupUser(username, password):
     with DBManager() as db:

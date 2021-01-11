@@ -17,7 +17,8 @@ from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for
 from db.DB import InitPhotosDb
 from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetImageDir, GetHostIP, GetScaledImage
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
+    GetImageDir, GetHostIP, GetScaledImage
 from image_processing.filtering import ProcessImage
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
@@ -253,6 +254,7 @@ class GetMyAlbum(Resource):
             img_album = request.data
             result = GetAlbumPhotos(img_album)
             result = json.dumps(result)
+	    #print img_album, result
             response = make_response(result)
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
@@ -340,6 +342,23 @@ class ImportPhotos(Resource):
 	    app_mail.send(msg)
     	    return make_response()
 
+class PhotoLabel(Resource):
+
+    def get(self):
+            img_uuid = request.args.get('img')
+	    result = DBGetPhotoLabel(img_uuid)
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
+    def post(self):
+    	    print request.values.get('img'), request.values.get('labels')
+	    DBAddPhotoLabel(request.values.get('img'), request.values.get('labels'))
+            response = make_response()
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 def page_not_found(e):
   return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
 
@@ -381,6 +400,7 @@ api.add_resource(DownloadPhoto, '/downloadphoto')
 api.add_resource(Login, '/login')
 api.add_resource(Signup, '/signup')
 api.add_resource(ImportPhotos, '/import')
+api.add_resource(PhotoLabel, '/label')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
