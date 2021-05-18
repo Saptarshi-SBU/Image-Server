@@ -69,7 +69,7 @@ def SortbyDate(jsonData):
 
 def LookupPhotos(like=False):
     photoPaths = []
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         if like:
             result = _dbSession.query(PhotoModel).filter((PhotoModel.Likes == "Like")).order_by(
@@ -81,7 +81,7 @@ def LookupPhotos(like=False):
                         ).order_by(
                         PhotoModel.DayTime
                         )
-        else:               
+        else:
             result = _dbSession.query(PhotoModel).order_by(
                         PhotoModel.Year.desc()
                         ).order_by(
@@ -100,7 +100,7 @@ def GetAlbumPhotos(album):
     photoPaths = []
     result = []
 
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter(PhotoModel.Tags == album) \
                         .order_by(
@@ -130,7 +130,7 @@ def FilterPhotos(start_year, to_year, album=None):
     if not isinstance(to_year, int) and not to_year.isnumeric():
         to_year = 2050
 
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         if album:
             search = "%{}%".format(album)
@@ -164,6 +164,25 @@ def FilterPhotos(start_year, to_year, album=None):
                 photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
             #photoPaths.append(photo.UUID)
 
+    return photoPaths
+
+def FilterLabeledPhotos(object_name, skip=False):
+    photoPaths = []
+
+    with DBManager() as db:
+        _dbSession = db.getSession()
+	if skip:
+		result = _dbSession.query(PhotoModel)\
+			.join(LabelModel, PhotoModel.UUID==LabelModel.UUID)\
+			.filter(~LabelModel.Labels.contains(object_name)).all()
+	else:
+		result = _dbSession.query(PhotoModel)\
+			.join(LabelModel, PhotoModel.UUID==LabelModel.UUID)\
+			.filter(LabelModel.Labels.contains(object_name)).all()
+        for photo in result:
+            photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
+                photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
+            #photoPaths.append(photo.UUID)
     return photoPaths
 
 def FilterPhotoAlbums():
@@ -211,7 +230,7 @@ def FilterPhotoAlbums():
     return photoList
 
 def TestDuplicate(sourceBlob, digest):
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.Digest == digest)).all()
         for photo in result:
@@ -220,9 +239,9 @@ def TestDuplicate(sourceBlob, digest):
                 fileBlob = fp.read()
                 if bytearray(sourceBlob) == bytearray(fileBlob):
                     return True
-    return False   
+    return False
 
-def InsertPhoto(filename, fileBlob, description):    
+def InsertPhoto(filename, fileBlob, description):
     img_dir = GetImageDir(CONFIG_FILE)
     img_uuid = uuid.uuid4()
     digest = comp_checksum(fileBlob)
@@ -234,21 +253,21 @@ def InsertPhoto(filename, fileBlob, description):
     imgPath = '{}/{}.JPG'.format(img_dir, img_uuid)
     fd = os.open(imgPath, os.O_RDWR | os.O_CREAT, 0644)
     os.write(fd, fileBlob)
-    os.close(fd)    
+    os.close(fd)
     try:
         [[year, month, day], secs] = GetDateTime(imgPath)
     except:
         [year, month, day, secs] = GetDateTimeLocal()
 
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         DBAddPhoto(_dbSession, img_uuid, filename, digest, \
             year, month, day, secs, img_dir, " ", description)
         _dbSession.commit()
     print ('{} saved to disk'.format(filename))
 
-def MarkPhotoFav(img_uuid, like=True):    
-    with DBManager() as db: 
+def MarkPhotoFav(img_uuid, like=True):
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
         for i in result:
@@ -259,22 +278,22 @@ def MarkPhotoFav(img_uuid, like=True):
             _dbSession.commit()
         print ("Marked Like photo :", img_uuid, like)
 
-def DeletePhoto(img_uuid):    
-    with DBManager() as db: 
+def DeletePhoto(img_uuid):
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
         for i in result:
             _dbSession.delete(i)
         _dbSession.commit()
 
-def UpdatePhotoTag(img_uuid, tag):    
-    with DBManager() as db: 
+def UpdatePhotoTag(img_uuid, tag):
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
         for i in result:
             i.Tags = tag
         _dbSession.commit()
-        print ('Updated {} {}'.format(img_uuid, tag))   
+        print ('Updated {} {}'.format(img_uuid, tag))
 
 def AutoCompleteAlbum(text):
     tl = []
@@ -302,7 +321,7 @@ def ScanPhotos():
 
 def GetScaledImage(img_uuid):
     img_data = None
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
 	for r in result:
@@ -318,7 +337,7 @@ def DBGetPhotoLabel(imgUUID):
         fetch a row for the imgUUID
     """
     entry = None
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         entry =  _dbSession.query(LabelModel).filter(LabelModel.UUID==imgUUID).first()
     return entry.Labels if entry else None
@@ -328,11 +347,25 @@ def DBAddPhotoLabel(imgUUID, imgLabels):
         insert record
     """
     entry = LabelModel(UUID=imgUUID, Labels=imgLabels)
-    with DBManager() as db: 
+    with DBManager() as db:
         _dbSession = db.getSession()
         _dbSession.add(entry)
 	_dbSession.commit()
     return entry
+
+def DBGetUnLabeledPhotos():
+    """
+        fetch imgUUIDs in PhotoTable not in LabelTable
+    """
+    result = []
+    with DBManager() as db:
+        dbSession = db.getSession()
+        entries =  dbSession.query(PhotoModel)\
+	           .outerjoin(LabelModel, PhotoModel.UUID==LabelModel.UUID)\
+		   .filter(LabelModel.Labels==None).all()
+        for entry in entries:
+		result.append(entry.UUID)
+    return result
 
 def LookupUser(username, password):
     with DBManager() as db:

@@ -18,7 +18,7 @@ from flask import Flask, Blueprint, send_file, request, make_response, send_from
 from db.DB import InitPhotosDb
 from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
-    GetImageDir, GetHostIP, GetScaledImage
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, GetImageDir, GetHostIP, GetScaledImage
 from image_processing.filtering import ProcessImage
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
@@ -94,7 +94,7 @@ class GetPhotoScaled(Resource):
             return abort(400)
         else:
             scale_pc = request.args.get('scale')
-            if False and scale_pc is None:
+            if scale_pc is None:
                 response = make_response(ProcessImage(GetPath(img_uuid)))
             else:
 		frame = GetScaledImage(img_uuid)
@@ -130,6 +130,16 @@ class ListGPhotos(Resource):
 
     def get(self):
 	    result = FilterPhotos(0, 3000, "Google")
+            img_list_string = json.dumps(result)
+            response = make_response(img_list_string)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.set('Content-Type', 'application/json')
+            return response
+
+class ListObjectPhotos(Resource):
+
+    def get(self):
+	    result = FilterLabeledPhotos("person", skip=True)
             img_list_string = json.dumps(result)
             response = make_response(img_list_string)
             response.headers.add('Access-Control-Allow-Origin', '*')
@@ -182,6 +192,16 @@ class ViewLikedPhotos(Resource):
 
     def get(self):
     	    with open('api/templates/view_like.html', 'r') as fp:
+                data = fp.read()
+		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
+
+class ViewLabeledPhotosAuto(Resource):
+
+    def get(self):
+	    with open('api/templates/objects_slide_view.html', 'r') as fp:
                 data = fp.read()
 		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
                 response = make_response(data)
@@ -359,6 +379,15 @@ class PhotoLabel(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+class PhotoNotLabel(Resource):
+
+    def get(self):
+	    result = DBGetUnLabeledPhotos()
+            result = json.dumps(result)
+            response = make_response(result)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 def page_not_found(e):
   return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
 
@@ -380,6 +409,7 @@ api.add_resource(ViewPhotos, '/view')
 api.add_resource(ViewPhotosAuto, '/auto')
 api.add_resource(ViewGPhotosAuto, '/gauto')
 api.add_resource(ViewLikedPhotos, '/viewlike')
+api.add_resource(ViewLabeledPhotosAuto, '/viewobjects')
 api.add_resource(EditPhotos, '/edit')
 api.add_resource(UploadPhotos, '/upload')
 api.add_resource(RemovePhoto, '/deletephoto')
@@ -389,6 +419,7 @@ api.add_resource(GetPhotoScaled, '/scaledphoto')
 api.add_resource(ListPhotos, '/listphotos')
 api.add_resource(ListLikePhotos, '/listlikephotos')
 api.add_resource(ListGPhotos, '/listgphotos')
+api.add_resource(ListObjectPhotos, '/listlabeledphotos')
 api.add_resource(SearchPhotos, '/search')
 api.add_resource(GetMyAlbums, '/myalbums')
 api.add_resource(GetMyAlbum, '/myalbum')
@@ -401,6 +432,7 @@ api.add_resource(Login, '/login')
 api.add_resource(Signup, '/signup')
 api.add_resource(ImportPhotos, '/import')
 api.add_resource(PhotoLabel, '/label')
+api.add_resource(PhotoNotLabel, '/nolabel')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
