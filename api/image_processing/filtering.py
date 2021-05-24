@@ -1,5 +1,14 @@
 import cv2
 
+def GetImageDimensions(filepath):
+        img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        if img_data is None:
+            print "invalid image file:", filepath
+	    return None, None
+        height = int(img_data.shape[0])
+        width  = int(img_data.shape[1])
+        return width, height
+
 def ProcessImageDeprecated(filepath, scale_percent=15):
         img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
         if img_data is None:
@@ -18,10 +27,11 @@ def ProcessImage(filepath, scale_percent=15):
 	    return None
         height = int(img_data.shape[0])
         width  = int(img_data.shape[1])
-	img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
-	img_frame = cv2.pyrDown(img_frame)
-	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
-	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        #print (filepath, height, width)
+        img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
+        img_frame = cv2.pyrDown(img_frame)
+        #encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
         _, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
         return img_encoded.tostring()
 
@@ -32,8 +42,8 @@ def TestImageSizeRatio(filepath):
 	    return None
         height = int(img_data.shape[0])
         width  = int(img_data.shape[1])
-	img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
-	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
-	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+        img_frame = cv2.pyrDown(img_data, dstsize=(width // 2, height // 2))
+        #encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
         _, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
         return img_data.size, img_encoded.size

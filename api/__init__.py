@@ -16,7 +16,7 @@ from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for
 from db.DB import InitPhotosDb
-from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, GetImageDir, GetHostIP, GetScaledImage
 from image_processing.filtering import ProcessImage
@@ -104,7 +104,8 @@ class GetPhotoScaled(Resource):
                     response = make_response(ProcessImage(GetPath(img_uuid), int(scale_pc)))
             response.headers.set('Content-Type', 'image/jpg')
             #response.headers.set('Content-Type', 'image/png')
-            return response
+            #print (response.content_length, scale_pc)
+	    return response
 
 class ListPhotos(Resource):
 
@@ -129,7 +130,8 @@ class ListLikePhotos(Resource):
 class ListGPhotos(Resource):
 
     def get(self):
-	    result = FilterPhotos(0, 3000, "Google")
+	    #result = FilterPhotos(0, 3000, "Google")
+	    result = FilterPhotosPotraitStyle(0, 3000, "Google")
             img_list_string = json.dumps(result)
             response = make_response(img_list_string)
             response.headers.add('Access-Control-Allow-Origin', '*')
@@ -181,12 +183,14 @@ class ViewPhotosAuto(Resource):
 class ViewGPhotosAuto(Resource):
 
     def get(self):
-	    with open('api/templates/gphotos_slide_view.html', 'r') as fp:
+	    #with open('api/templates/gphotos_slide_view_grid2.html', 'r') as fp:
+	    with open('api/templates/gphotos_slide_view_grid.html', 'r') as fp:
+	    #with open('api/templates/gphotos_slide_view.html', 'r') as fp:
                 data = fp.read()
 		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
                 response = make_response(data)
                 response.headers.add('Access-Control-Allow-Origin', '*')
-                return response
+	    	return response
 
 class ViewLikedPhotos(Resource):
 

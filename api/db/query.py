@@ -8,7 +8,8 @@ from sqlalchemy import func
 from sqlalchemy import and_
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
-from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel
+from DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel
+from ..image_processing.filtering import GetImageDimensions
 
 CONFIG_FILE="/etc/api.cfg"
 
@@ -165,6 +166,20 @@ def FilterPhotos(start_year, to_year, album=None):
             #photoPaths.append(photo.UUID)
 
     return photoPaths
+
+def FilterPhotosPotraitStyle(start_year, to_year, album=None):
+    photos = []
+    result = FilterPhotos(start_year, to_year, album)
+    standard_sizes = set([ ("3024", "4032")])
+    for photo in result:
+        w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
+	if (w, h) not in standard_sizes:
+		continue
+	photo["width"] = w
+        photo["height"] = h
+        photos.append(photo)
+	#print (photo)
+    return photos
 
 def FilterLabeledPhotos(object_name, skip=False):
     photoPaths = []
@@ -384,3 +399,27 @@ def AddUser(username, password):
     	_dbSession.add(user)
 	_dbSession.commit()
     return user
+
+def DBGetPhotoDimensions(imgUUID):
+    """
+        fetch a row for the imgUUID
+    """
+    entry = None
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        entry =  _dbSession.query(PhotoSizeModel).filter(PhotoSizeModel.UUID==imgUUID).first()
+    if entry:
+        return entry.Width, entry.Height
+    else:
+	return 0, 0
+
+def DBAddPhotoDimensions(imgUUID, width, height):
+    """
+        insert record
+    """
+    entry = PhotoSizeModel(UUID=imgUUID, Width=width, Height=height)
+    with DBManager() as db:
+        _dbSession = db.getSession()
+        _dbSession.add(entry)
+	_dbSession.commit()
+    return entry

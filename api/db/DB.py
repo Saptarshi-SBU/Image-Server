@@ -60,12 +60,24 @@ class LabelModel(Base):
 
 class UserModel(Base):
     """
-       arep session table for session information from replicator
+	user table
     """
     __tablename__ = 'UserTable'
     UUID = Column(String(uuidLen), nullable=False)
     Username = Column(String(stringLen), primary_key=True)
     Password = Column(String(stringLen), nullable=False)
+
+    def __repr__(self):
+        return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
+
+class PhotoSizeModel(Base):
+    """
+	photo dimension table
+    """
+    __tablename__ = 'PhotoSizeTable'
+    UUID = Column(String(uuidLen), primary_key=True)
+    Width = Column(String(stringLen), nullable=False)
+    Height = Column(String(stringLen), nullable=False)
 
     def __repr__(self):
         return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
@@ -179,8 +191,9 @@ def DumpTables(session):
         print (photo)
         result.append(photo)
     return result
+
 '''
-InitPhotosDb();
+InitPhotosDb()
 with DBManager() as db: 
     _dbSession = db.getSession()
     DBAddPhoto(_dbSession, "sample.jpg", uuid.uuid4(), 2017, 01, 01, "/tmp/path/")

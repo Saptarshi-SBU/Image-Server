@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+img {
+    //min-width: 50%;
+    max-width: 100%;
+    //min-height: 50%;
+    max-height: 100%;
+}
+
+.marginauto {
+    margin: 10px auto 20px;
+    display: none;
+}
+
+.marginauto_cap {
+    text-align: center;
+    font-size: 24px;
+}
+
+.grid-container {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.item {
+    flex: 1 1 0px
+    border: 1px solid black;
+}
+
+.box {
+  background-color: #444;
+  color: #fff;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 150%;
+}
+
+@media screen and (min-width: 1024px ) {
+
+}
+
+@media screen and (max-width: 768px) and (min-width: 425px ){
+}
+
+@media screen and (max-width: 425px ){
+}
+
+</style>
+</head>
+
+<p id="demo"></p>
+
+<div class="grid-container">
+	<div>
+    		<img class="marginauto" id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+	</div>
+
+	<div>
+    		<img class="marginauto" id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+	</div>
+</div>
+
+<script>
+
+// holds json for all photos
+var i = 0;
+var arr;
+
+function run_next() {
+    var total = arr.length
+    newimg1 = document.getElementById("img1")
+    newimg1.style.opacity = 0;
+    newimg1.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+    newimg1.title = arr[i].value.name + "(" + arr[i].value.date + ")"
+    newimg1.style.display = "block";
+    newimg1.style.opacity = 1;
+    i = (i + 1) % arr.length;
+    newimg2 = document.getElementById("img2")
+    newimg2.style.opacity = 0;
+    newimg2.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+    newimg2.title = arr[i].value.name + "(" + arr[i].value.date + ")"
+    newimg2.style.display = "block";
+    newimg2.style.opacity = 1;
+    i = (i + 1) % arr.length;
+    setTimeout(run_next, 5000);
+}
+
+xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
+            arr = JSON.parse(xmlhttp.responseText)
+            run_next();
+    } else {
+        console.log(this.status)
+    }
+};
+xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/listgphotos", true);
+xmlhttp.send();
+
+</script>
+
+</html>

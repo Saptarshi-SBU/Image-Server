@@ -1,16 +1,20 @@
 ## Introduction
 
  A web based image hosting service for private setups built using Flask as the backend.
+ The service can host both medium and high resolution pictures. There are backend services
+ for downsampling and resizing images so that images are served with minimal use of network
+ bandwidth. Custom image visualizations like grid views, slideshows are exposed via REST API
+ endpoints.
 
- You can deploy, browse and mantain all your personal images with least concern about
- security in a controlled environment.
- 
  New extensions allow it to connect to cloud storage for fetching personal images from
  the cloud. This is useful when users tend to exceed alloted free space in the cloud.
 
+ Now you can deploy, browse and mantain all your personal images with least concern about
+ security, in a home environment.
+ 
 ## Features
 
-  +) Provides capabilities for creating personal albums, searching albums.
+  +) Provides capabilities for creating personal albums, browsing and searching albums.
   
   +) Provides a list of REST based APIs to interact with the service.
 
@@ -40,11 +44,15 @@
 
 ### Image Labelling Service
 
+##### $python -m api.svc.label_svc
+
  <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/LabelledPhoto03.png" width="800">
 
 ### Import GoogleCloud Photos :
 
- <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/GooglePhoto03.png" width="800">
+##### $python -m api.svc.gphotos_syncer_svc
+
+ <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/GooglePhoto05.png" width="800">
 
 ### API Statistics :
 
