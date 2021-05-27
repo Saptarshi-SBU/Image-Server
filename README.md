@@ -50,7 +50,9 @@
 
 ### Import GoogleCloud Photos :
 
-##### $python -m api.svc.gphotos_syncer_svc
+##### $python -m api.svc.gphotos_syncer_svc (provide access token)
+##### $python -m api.svc.photos_resizing_svc
+##### $python -m api.svc.photos_dimensions_svc
 
  <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/GooglePhoto05.png" width="800">
 

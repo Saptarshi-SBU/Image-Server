@@ -167,18 +167,17 @@ def FilterPhotos(start_year, to_year, album=None):
 
     return photoPaths
 
-def FilterPhotosPotraitStyle(start_year, to_year, album=None):
+def FilterPhotosPotraitStyle(start_year, to_year, standard_sizes, album=None):
     photos = []
     result = FilterPhotos(start_year, to_year, album)
-    standard_sizes = set([ ("3024", "4032")])
     for photo in result:
         w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
 	if (w, h) not in standard_sizes:
 		continue
-	photo["width"] = w
-        photo["height"] = h
+        photo["value"]["width"] = int(w)
+        photo["value"]["height"] = int(h)
         photos.append(photo)
-	#print (photo)
+        #print (photo)
     return photos
 
 def FilterLabeledPhotos(object_name, skip=False):

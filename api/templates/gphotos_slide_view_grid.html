@@ -6,9 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 img {
-    //min-width: 50%;
     max-width: 100%;
-    //min-height: 50%;
     max-height: 100%;
 }
 
@@ -29,35 +27,12 @@ img {
     justify-content: center;
 }
 
-.item {
-    flex: 1 1 0px
-    border: 1px solid black;
-}
-
-.box {
-  background-color: #444;
-  color: #fff;
-  border-radius: 5px;
-  padding: 5px;
-  font-size: 150%;
-}
-
-@media screen and (min-width: 1024px ) {
-
-}
-
-@media screen and (max-width: 768px) and (min-width: 425px ){
-}
-
-@media screen and (max-width: 425px ){
-}
-
 </style>
 </head>
 
 <p id="demo"></p>
 
-<div class="grid-container">
+<div class="grid-container" id="gd1">
 	<div>
     		<img class="marginauto" id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
 	</div>
@@ -67,29 +42,68 @@ img {
 	</div>
 </div>
 
+<div class="grid-container" id="gd2">
+	<div>
+		<img class="marginauto" id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+	</div>
+</div>
+
 <script>
 
 // holds json for all photos
-var i = 0;
 var arr;
+var curr = 0;
 
-function run_next() {
-    var total = arr.length
-    newimg1 = document.getElementById("img1")
-    newimg1.style.opacity = 0;
-    newimg1.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
-    newimg1.title = arr[i].value.name + "(" + arr[i].value.date + ")"
-    newimg1.style.display = "block";
-    newimg1.style.opacity = 1;
-    i = (i + 1) % arr.length;
-    newimg2 = document.getElementById("img2")
-    newimg2.style.opacity = 0;
-    newimg2.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
-    newimg2.title = arr[i].value.name + "(" + arr[i].value.date + ")"
-    newimg2.style.display = "block";
-    newimg2.style.opacity = 1;
-    i = (i + 1) % arr.length;
-    setTimeout(run_next, 5000);
+function run_next1(v1, v2) {
+	newimg1 = document.getElementById("img1")
+	newimg1.style.opacity = 0;
+        newimg1.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v1.value.uuid
+	newimg1.title = v1.value.name + "(" + v1.value.date + ")"
+	newimg1.style.display = "block";
+	newimg1.style.opacity = 1;
+	newimg2 = document.getElementById("img2")
+	newimg2.style.opacity = 0;
+	newimg2.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v2.value.uuid
+	newimg2.title = v2.value.name + "(" + v2.value.date + ")"
+	newimg2.style.display = "block";
+	newimg2.style.opacity = 1;
+}
+
+function run_next2(v) {
+	newimg3 = document.getElementById("img3")
+	newimg3.style.opacity = 0;
+        newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
+	newimg3.title = v.value.name + "(" + v.value.date + ")"
+	newimg3.style.minWidth = "75%";
+	newimg3.style.minHeight = "75%";
+	newimg3.style.display = "block";
+	newimg3.style.opacity = 1;
+}
+
+function set_slideshow() {
+    if (arr && arr.length > 0) {
+	    var k;
+	    var next = (curr + 1) % arr.length;
+	    var slides = document.getElementsByClassName("grid-container");
+	    if ((arr[curr].value.width == 3024) && (arr[next].value.width == 3024)) {
+		for (k = 0; k < slides.length; k++) {
+		      slides[k].style.display = "none";
+		}
+		slides[0].style.display = "flex";
+		run_next1(arr[curr], arr[next])
+		curr = (next + 1) % arr.length;
+	    } else if(arr[curr].value.width == 4032) {
+		for (k = 0; k < slides.length; k++) {
+		      slides[k].style.display = "none";
+		}
+		slides[1].style.display = "block";
+		run_next2(arr[curr])
+		curr = (curr + 1) % arr.length;
+	    } else {
+		curr = (curr + 1) % arr.length;
+	    }
+    }
+    setTimeout(set_slideshow, 5000);
 }
 
 xmlhttp = new XMLHttpRequest();
@@ -97,12 +111,13 @@ xmlhttp.onreadystatechange = function() {
     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
             arr = JSON.parse(xmlhttp.responseText)
-            run_next();
+	    set_slideshow();
     } else {
         console.log(this.status)
+        console.log(this.readyState)
     }
 };
-xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/listgphotos", true);
+xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/listgphotos?width=3024&width=4032&height=4032&height=3024", true);
 xmlhttp.send();
 
 </script>

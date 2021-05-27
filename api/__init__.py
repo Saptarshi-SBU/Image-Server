@@ -12,9 +12,10 @@ import datetime
 import urllib
 import traceback
 import flask
+import functools
 from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
-from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for
+from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for, session, flash
 from db.DB import InitPhotosDb
 from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
@@ -33,6 +34,17 @@ app_mail = None
 app_mail_sender = "saptarshi.mrg@gmail.com"
 app_main_receiver = "saptarshi.mrg@gmail.com"
 
+def checklogin(method):
+    @functools.wraps(method)
+    def check_login(*args, **kwargs):
+	user_id = session.get("user_id")
+	if not user_id:
+	    flash("please log in")
+            return make_response(render_template('login.html'))
+	else:
+	    return method(args, **kwargs)
+    return check_login
+
 def nocache(view):
     @wraps(view)
     def no_cache(*args, **kwargs):
@@ -47,6 +59,7 @@ def nocache(view):
 
 class Home(Resource):
 
+    @checklogin
     def get(self):
         #time.sleep(1)
 	with open('api/templates/main.html', 'r') as fp:
@@ -130,13 +143,19 @@ class ListLikePhotos(Resource):
 class ListGPhotos(Resource):
 
     def get(self):
-	    #result = FilterPhotos(0, 3000, "Google")
-	    result = FilterPhotosPotraitStyle(0, 3000, "Google")
-            img_list_string = json.dumps(result)
-            response = make_response(img_list_string)
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.set('Content-Type', 'application/json')
-            return response
+	    l = []
+	    w_arr = request.args.getlist("width")
+	    h_arr = request.args.getlist("height")
+	    for w,h in zip(w_arr, h_arr):
+	         l.append((w,h))
+	    print "cookie", request.cookies.get('user_id')
+	    #standard_sizes = set([ ("3024", "4032")])
+	    result = FilterPhotosPotraitStyle(0, 3000, set(l), "Google")
+	    img_list_string = json.dumps(result)
+	    response = make_response(img_list_string)
+	    response.headers.add('Access-Control-Allow-Origin', '*')
+	    response.headers.set('Content-Type', 'application/json')
+	    return response
 
 class ListObjectPhotos(Resource):
 
@@ -254,6 +273,7 @@ class SearchPhotos(Resource):
 
 class GetMyAlbums(Resource):
 
+    @checklogin
     def post(self):
             result = FilterPhotoAlbums()
             result = json.dumps(result)
@@ -341,7 +361,10 @@ class Login(Resource):
 
     def post(self):
 	    if LookupUser(request.form.get('email'), request.form.get('password')):
-	    	return make_response(flask.redirect(url_for('api.home')))
+		session["user_id"] = uuid.uuid4()
+		res = make_response(flask.redirect(url_for('api.home')))
+		#res.set_cookie('user_id', str(uuid.uuid4()), max_age=60*60*24*365*2)
+		return res
 	    else:
 	    	return make_response(flask.redirect(url_for('api.signup')))
 
@@ -440,6 +463,7 @@ api.add_resource(PhotoNotLabel, '/nolabel')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
+app.secret_key="MY SECRET KEY"
 #dashboard.bind(app)
 app_mail = Mail(app)
 

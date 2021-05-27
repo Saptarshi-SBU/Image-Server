@@ -16,7 +16,7 @@ def ScanAddPhotosDimension():
     for photo in result:
 	count = count + 1
         w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
-        if w is None:
+        if w == 0:
     	    with DBManager() as db:
         	_dbSession = db.getSession()
                 result2 = _dbSession.query(PhotoModel).filter \
@@ -26,6 +26,8 @@ def ScanAddPhotosDimension():
 	    assert w, "invalid image dimensions:{}".format(imgPath)
             DBAddPhotoDimensions(result2.UUID, w, h)
 	    print ('{} saving dimensions :{} weight :{} height :{}'.format(count, photo, w, h))
+	#else:
+	    #print count, photo["value"]["tags"], photo["value"]["date"], w, h
 
 if __name__ == "__main__" :
     ScanAddPhotosDimension()

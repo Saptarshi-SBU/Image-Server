@@ -8,7 +8,7 @@ import threading
 from ..db.DB import DBManager, PhotoModel
 from ..db.query import GetMediumScaledImageDir
 from ..db.dbconf import *
-from filtering import ProcessImage, TestImageSizeRatio
+from ..image_processing.filtering import ProcessImage, TestImageSizeRatio
 
 def CheckConvertScalingSavings():
 	with DBManager() as db: 
@@ -49,8 +49,8 @@ def ConvertPhotosMediumSingleThreaded(new_path):
 	    n = len(result)
 	    print ('total records :{}'.format(n))
 	    for r in result:
-		#if len(r.NameSpace_Medium) > 1:
-		#    continue
+		if len(r.NameSpace_Medium) > 1:
+		    continue
 		k += 1
 		imgPath = '{}/{}.JPG'.format(r.NameSpace, r.UUID)
 		data = ProcessImage(imgPath)
