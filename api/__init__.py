@@ -15,11 +15,11 @@ import flask
 import functools
 from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
-from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for, session, flash
+from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from db.DB import InitPhotosDb
 from db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, GetImageDir, GetHostIP, GetScaledImage
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
 from image_processing.filtering import ProcessImage
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
@@ -74,7 +74,11 @@ class Home(Resource):
 class WelcomeBanner(Resource):
 
     def get(self):
-        response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
+        img_uuid = DBGetUserImage(session["user_id"])
+	if img_uuid:
+            response = make_response(ProcessImage(GetPath(img_uuid), int(20)))
+	else:
+            response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
         response.headers.set('Content-Type', 'image/jpg')
         return response
 
@@ -361,12 +365,28 @@ class Login(Resource):
 
     def post(self):
 	    if LookupUser(request.form.get('email'), request.form.get('password')):
-		session["user_id"] = uuid.uuid4()
+		session["user_id"] = request.form.get('email')
 		res = make_response(flask.redirect(url_for('api.home')))
 		#res.set_cookie('user_id', str(uuid.uuid4()), max_age=60*60*24*365*2)
 		return res
 	    else:
 	    	return make_response(flask.redirect(url_for('api.signup')))
+
+class LogOut(Resource):
+
+    def get(self):
+	    session.pop("user_id", None)
+	    return make_response(render_template('login.html'))
+
+class SetWallPhoto(Resource):
+
+    def post(self):
+            if DBSetUserImage(session["user_id"], request.data):
+		    response = make_response()
+		    response.headers.add('Access-Control-Allow-Origin', '*')
+		    return response
+	    else:
+		    return make_response(jsonify({"message": "invalid user id", "data": ""}), 403)
 
 class Signup(Resource):
 
@@ -457,9 +477,11 @@ api.add_resource(UpdatePhoto, '/updatephoto')
 api.add_resource(DownloadPhoto, '/downloadphoto')
 api.add_resource(Login, '/login')
 api.add_resource(Signup, '/signup')
+api.add_resource(LogOut, '/logout')
 api.add_resource(ImportPhotos, '/import')
 api.add_resource(PhotoLabel, '/label')
 api.add_resource(PhotoNotLabel, '/nolabel')
+api.add_resource(SetWallPhoto, '/wallphoto')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')

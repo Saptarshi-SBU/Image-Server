@@ -3,47 +3,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="http://$SERVER_HOST_IP:4040/api/v1/favicon.ico" type="image/x-icon"/>
 <link rel="shortcut icon" href="http://$SERVER_HOST_IP:4040/api/v1/favicon.ico" type="image/x-icon"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <style>
+
+body {
+ font-family: Arial, Helvetica, sans-serif;
+}
 
 a {
     text-decoration: none;
 }
 
 .center {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      width: 50%;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 50%;
 }
-html { 
-      background: url(http://$SERVER_HOST_IP:4040/api/v1/welcome) no-repeat center center fixed; 
-        -webkit-background-size: cover;
-        -moz-background-size: cover;
-        -o-background-size: cover;
-        background-size: cover;
-}
-</style>
 
-<style type="text/css">
-       a:link {color: blue;}      /* unvisited link */
-       a:visited {color: blue;}   /* visited link */
-       a:hover {color: blue;}     /* mouse over link */
-       a:active {color: blue;}    /* selected link */
+.topnav {
+	overflow: hidden;
+	background-color: black;
+}
+
+.topnav a {
+	float: left;
+	display: block;
+	color: #f2f2f2;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
+	font-size: 17px;
+}
+
+.topnav a:hover {
+	background-color: #ddd;
+	color: black;
+}
+
+.topnav a.active {
+	background-color: #04AA6D;
+	color: white;
+}
+
+.topnav .icon {
+	display: none;
+}
+
+html { 
+	background: url(http://$SERVER_HOST_IP:4040/api/v1/welcome) no-repeat center center fixed; 
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
 
 </style>
 
 <body>
-<div align="center" style="font-size: 18px;" >
+
+<!-- Navigation Menu -->
+<div class="topnav" id="myTopNav">
+    <a href="home" class="active">Home</a>
     <a href="http://$SERVER_HOST_IP:4040/api/v1/view">Albums</a>
     <a href="http://$SERVER_HOST_IP:4040/api/v1/upload">Upload</a>
     <a href="http://$SERVER_HOST_IP:4040/api/v1/auto">Favourites</a>
     <a href="http://$SERVER_HOST_IP:4040/api/v1/import">ImportPhotos</a>
     <a href="http://$SERVER_HOST_IP:4040/api/v1/gauto">GooglePhotos</a>
-    <a href="http://$SERVER_HOST_IP:4040/api/v1/search">Search</a>
-    <a href="http://$SERVER_HOST_IP:4040/api/v1/viewobjects">TaggedPhotos</a>
-    <!-- <a href="http://$SERVER_HOST_IP:4040/api/v1/auto">SlideShow</a></p> -->
-</div> 
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/search">SearchPhotos</a>
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/viewobjects">LabelledPhotos</a>
+    <a href="http://$SERVER_HOST_IP:4040/api/v1/logout">Logout</a>
+    <a href="javascript:void(0);" class="icon" onclick="select_menus2()">
+      <i class="fa fa-bars"></i>
+    </a>
+</div>
+
 <p id="quoteid" style="font-size: 24px; text-align:center;"><font> Find your inspiration today!</font></p>
 
 <script>
@@ -62,6 +97,24 @@ var quotes = [
 
 ];
 
+function select_menus() {
+  var x = document.getElementById("myLinks");
+  if (x.style.display === "block") {
+    x.style.display = "none";
+  } else {
+    x.style.display = "block";
+  }
+}
+
+function select_menus2() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+
 function choose_quote() {
     var i = Math.ceil(Math.random() * 10) % quotes.length;
     newquote = document.getElementById("quoteid")
@@ -71,6 +124,7 @@ function choose_quote() {
 document.addEventListener("DOMContentLoaded", function() {
      choose_quote();
 });
+
 </script>
 </body>
 </html>

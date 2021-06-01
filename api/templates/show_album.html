@@ -7,8 +7,8 @@ a {
     text-decoration: none;
 }
 
-img { 
-    width: 50%; 
+img {
+    width: 50%;
 }
 .marginauto {
     margin: 20px auto 20px;
@@ -33,7 +33,7 @@ img {
 
 <div align="center" style="font-size: 24px;" >
     <br> Album : album_value </br>
-</div>    
+</div>
 <p id="demo"></p>
 <div align="center" style="font-size: 20px;" >
     <a href="http://$SERVER_HOST_IP:4040/api/v1/view">Back</a>
@@ -54,14 +54,15 @@ img {
                 img_urls += "<font size=+1> <a href=http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid + " style='text-decoration:none'>" + "ID : " + arr[i].value.uuid + "</a> </font>"
                 img_urls += "<img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/>"
                 img_urls += "<p>"
-                like_fn    = 'run_like_unlike(this,' + '"' + arr[i].value.uuid + '") ' 
-                del_fn     = 'run_delete(this,' + '"' + arr[i].value.uuid + '") ' 
+                like_fn    = 'run_like_unlike(this,' + '"' + arr[i].value.uuid + '") '
+                del_fn     = 'run_delete(this,' + '"' + arr[i].value.uuid + '") '
+                wall_fn    = 'run_wall(this,' + '"' + arr[i].value.uuid + '") '
                 like       = "Like"
                 console.log(arr[i].value.uuid + ' : ' + arr[i].value.like)
                 if (like.localeCompare(arr[i].value.like) == 0)
-                    img_urls += "<button onclick="+ like_fn + "style=font-size:16px>\u2665</button> <button onclick=" + del_fn + " style=font-size:16px>\u007f</button>"
-                else    
-                    img_urls += "<button onclick="+ like_fn + "style=font-size:16px>\u2661</button> <button onclick=" + del_fn + " style=font-size:16px>\u007f</button>"
+                    img_urls += "<button onclick="+ like_fn + "style=font-size:16px>\u2665</button> <button onclick=" + del_fn + " style=font-size:16px>\u007f</button> <button onclick="+ wall_fn + "style=font-size:16px>\u2667</button>"
+                else
+                    img_urls += "<button onclick="+ like_fn + "style=font-size:16px>\u2661</button> <button onclick=" + del_fn + " style=font-size:16px>\u007f</button> <button onclick="+ wall_fn + "style=font-size:16px>\u2667</button>"
                 img_urls += "<p><a href='http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img='" + arr[i].value.uuid + "style='font-size: 24px;' download=" + arr[i].value.uuid +
                     "> Download \u2193</a></p>"
                 img_urls += "</p> "
@@ -113,11 +114,18 @@ img {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             elem.textContent = blackdiamond;
             console.log(uuid + ' deleted')
-        }    
-    };    
+        }
+    };
     xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/deletephoto", true);
     xmlhttp.send(uuid);
     console.log(uuid + ' deleting')
+  }
+
+  function run_wall(elem, uuid) {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/wallphoto", true);
+    xmlhttp.send(uuid);
+    console.log(uuid + ' set wall image')
   }
 
 </script>

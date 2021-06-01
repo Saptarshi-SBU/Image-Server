@@ -30,6 +30,8 @@ img {
 </style>
 </head>
 
+<body style="background-color:black;">
+
 <p id="demo"></p>
 
 <div class="grid-container" id="gd1">
@@ -47,6 +49,7 @@ img {
 		<img class="marginauto" id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
 	</div>
 </div>
+</body>
 
 <script>
 
@@ -74,8 +77,8 @@ function run_next2(v) {
 	newimg3.style.opacity = 0;
         newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
 	newimg3.title = v.value.name + "(" + v.value.date + ")"
-	newimg3.style.minWidth = "75%";
-	newimg3.style.minHeight = "75%";
+	newimg3.style.minWidth = "90%";
+	newimg3.style.minHeight = "90%";
 	newimg3.style.display = "block";
 	newimg3.style.opacity = 1;
 }
@@ -103,7 +106,7 @@ function set_slideshow() {
 		curr = (curr + 1) % arr.length;
 	    }
     }
-    setTimeout(set_slideshow, 5000);
+    setTimeout(set_slideshow, 15000);
 }
 
 xmlhttp = new XMLHttpRequest();

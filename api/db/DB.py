@@ -66,6 +66,7 @@ class UserModel(Base):
     UUID = Column(String(uuidLen), nullable=False)
     Username = Column(String(stringLen), primary_key=True)
     Password = Column(String(stringLen), nullable=False)
+    ImageUUID = Column(String(64), nullable=False)
 
     def __repr__(self):
         return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)

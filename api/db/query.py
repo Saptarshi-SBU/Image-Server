@@ -399,6 +399,27 @@ def AddUser(username, password):
 	_dbSession.commit()
     return user
 
+def DBGetUserImage(username):
+    with DBManager() as db:
+        _dbSession = db.getSession()
+	result = _dbSession.query(UserModel).filter(UserModel.Username==username).first()
+	if result:
+		return result.ImageUUID
+	else:
+		return False
+
+def DBSetUserImage(username, image_uuid):
+    with DBManager() as db:
+        _dbSession = db.getSession()
+	result = _dbSession.query(UserModel).filter(UserModel.Username==username).first()
+	if result:
+		result.ImageUUID = image_uuid
+		_dbSession.commit()
+                #print ('Updated User image {}'.format(img_uuid))
+	else:
+		print ('invalid user name :{}'.format(username))
+		return None
+
 def DBGetPhotoDimensions(imgUUID):
     """
         fetch a row for the imgUUID

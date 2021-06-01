@@ -31,6 +31,13 @@ g_scope = [ \
 DB_ENGINE = "sqlite:///{database}"
 DBCONFIG_DICT = { 'database' : 'GPhotos.db' }
 
+CONFIG_FILE="/etc/api.cfg"
+
+def gclient_response_code(cfg_file=CONFIG_FILE):
+    config = ConfigParser.ConfigParser()
+    config.read(cfg_file)
+    return config.get("gphotos", "code")
+
 def convert_to_datetime(string):
     i=string.find('T')
     s=string[0:i]
@@ -124,8 +131,8 @@ def DBGetMaxDate():
         result = dbSession.query(sa.func.max(GPhoto.date_time)).first()
         for r in result:
             t = r.timetuple()
-            print r, r.timetuple()
-            print t.tm_year, t.tm_mon, t.tm_mday
+            print (r, r.timetuple())
+            print (t.tm_year, t.tm_mon, t.tm_mday)
             return r
 
 class GClientOAuth2(object):
@@ -149,10 +156,12 @@ class GClientOAuth2(object):
         # force to always make user click authorize
         authorization_url, state = self.oauth_client2.authorization_url(self.authorization_base_url,
             access_type="offline", prompt="select_account")
-        print 'Please authorize the url from your browser:', authorization_url
+        print ('Please authorize the url from your browser:', authorization_url)
         # Get the authorization verifier code from the callback url
         #redirect_response = raw_input('Paste the full redirect URL here:')
-        response_code = raw_input('Paste the response code here:')
+	response_code = gclient_response_code()
+	if response_code is None:
+            response_code = raw_input('Paste the response code here:')
         self.oauth_client2.fetch_token(self.token_uri, client_secret=self.client_secret, code=response_code)
 
 class GPhotosClient_V1(GClientOAuth2):
@@ -167,13 +176,13 @@ class GPhotosClient_V1(GClientOAuth2):
     def self_test(self):
         # Fetch a protected resource, i.e. user profile
         response = self.oauth_client2.get('https://photoslibrary.googleapis.com/v1/albums')
-        print response.content
+        print (response.content)
 
     def store_photo(self, data_dir, file_name, raw_bytes):
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         path = '{}/{}'.format(data_dir, file_name)
-        print path
+        print (path)
         return
         fd = os.open(path, os.O_CREAT | os.O_RDWR)
         os.write(fd, raw_bytes)
@@ -199,16 +208,16 @@ class GPhotosClient_V1(GClientOAuth2):
                             date_time=convert_to_datetime(creation_time))
                         _dbSession.add(entry)
                         _dbSession.commit()
-                        print entry
+                        print (entry)
                     #print response.status_code, response.headers, len(response.content)
                 if "nextPageToken" in data_dict:
                     params = { "pageToken" : data_dict["nextPageToken"] }
                 else:
                     done = True
-                    print 'finished listing all media items'
+                    print ('finished listing all media items')
             else:
-                print 'error downloading photos, exit response status code :', \
-                    response.status_code
+                print ('error downloading photos, exit response status code :', \
+                    response.status_code)
                 break
 
     def download_photos_bydate(self):
@@ -256,26 +265,29 @@ class GPhotosClient_V1(GClientOAuth2):
                         dbSession = db.getSession()
                         entry = GPhoto(filename=ans["filename"],
                             date_time=convert_to_datetime(creation_time))
-                        dbSession.add(entry)
-                        dbSession.commit()
-                        print entry
+			try:
+                            dbSession.add(entry)
+                            dbSession.commit()
+                            print (entry)
+			except:
+			    print ("db insert error :{}".format(sys.exc_info()[0]))
                     #print response.status_code, response.headers, len(response.content)
                 if "nextPageToken" in data_dict:
                     page_token = data_dict["nextPageToken"]
                 else:
                     done = True
-                    print 'finished listing all media items'
+                    print ('finished listing all media items')
             else:
-                print 'error downloading photos, exit response status code :', \
-                    response.status_code
-                print response.content
+                print ('error downloading photos, exit response status code :', \
+                    response.status_code)
+                print (response.content)
                 break
 
 if __name__ == "__main__":
     InitPhotosDb()
     result = DBGetPhotos()
     for r in result:
-        print r.filename, r.date_time
+        print (r.filename, r.date_time)
     result = DBGetMaxDate()
     google = GPhotosClient_V1(g_client_id, g_client_secret, g_scope,
             g_authorization_base_url, g_token_url)
