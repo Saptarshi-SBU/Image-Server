@@ -11,7 +11,7 @@ from sqlalchemy import Column, Integer, BigInteger, Float, String, \
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-from dbconf import *
+from .dbconf import *
 
 #for creating database
 DBCONN_FMT = "mysql://{user}:{password}@{host}:{port}"

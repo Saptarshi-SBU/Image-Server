@@ -1,7 +1,7 @@
 from string import ascii_lowercase
-from suffix_trie import SuffixTrie
-from edit_distance import edit_distance
-from bktree import CreateBkTree, ApproximateMatch
+from .suffix_trie import SuffixTrie
+from .edit_distance import edit_distance
+from .bktree import CreateBkTree, ApproximateMatch
 
 def AutoCorrect(tl, text, k=2):
     #tokenize

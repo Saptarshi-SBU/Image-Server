@@ -31,6 +31,19 @@
  +)  systemctl start mysqld
 
  +)  python run.py
+
+## MySQL database migration Steps
+ On Host A
+ +) mysqldump -u photoserver -p Photos > photos.sql
+
+ On Host B
+ +) sudo mysql
+  ++) create user 'photoserver'@'localhost' password xxx
+  ++) select * from user;
+ +) mysql -u photoserver -p
+  ++) create database Photos;
+  ++) GRANT ALL PRIVILEGES ON *.* TO 'photoserver'@'localhost';
+ +)sudo mysql -u photoserver -p Photos < photos.sql
  
 ## Screenshots
 

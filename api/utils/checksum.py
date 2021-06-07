@@ -11,7 +11,7 @@ def comp_checksum(args):
     """
     g = io.BytesIO()
     for i in args:
-        g.write(i)
+        g.write(str(i).encode())
     g.seek(0)
     s = g.read()
     m = hashlib.md5()

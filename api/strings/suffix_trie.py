@@ -78,7 +78,7 @@ class SuffixTrie(object):
             node = self.root
 
         if node.leaf:
-            print string, node.doc_index
+            print (string, node.doc_index)
             return
 
         #print node.children.keys()

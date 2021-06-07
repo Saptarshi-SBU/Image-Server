@@ -5,7 +5,7 @@
 # https://signal-to-noise.xyz/post/bk-tree/
 #
 
-from edit_distance import edit_distance
+from .edit_distance import edit_distance
 
 class BKNode(object):
     
