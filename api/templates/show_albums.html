@@ -25,25 +25,64 @@ img {
        a:active {color: blue;}    /* selected link */
 </style>
 
+<body style="background-color:black;">
+
+
 <div align="center" style="font-size: 24px;" >
     <a href="http://$SERVER_HOST_IP:4040/api/v1/">Home</a>
 </div>
 
 <body>
 <div align="center" style="font-size: 32px;" >
-    <br> My Albums </br>
+    <br> Album : album_value </br>
 </div>    
 <p id="demo"></p>
 <script type="text/javascript">
-  function run_albumsearch() {
+
+  var arr;
+  var i = 0;
+  var img_urls = ""
+  var img_urls_lazy = ""
+  function show_images() {
+	  var rows = 0;
+	  if (img_urls_lazy == "") {
+		  for (;i < arr.length && rows < 10; i++, rows++) {
+			var text = arr[i].value.tags
+			var image = encodeURIComponent(text)
+			img_urls += "<div><img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" +
+			    arr[i].value.uuid + " alt=centered image/></div>"
+		  }
+	  } else {
+		  img_urls = img_urls_lazy
+	  }
+
+	  img_urls += "<div align=center style=font-size: 32px;>"
+	  img_urls += "<input id=action class=marginauto type=button value=more onclick=show_images() style=height: 32px;width:96px;font-size: 16px;></input>"
+	  img_urls += "</div>"
+	  document.getElementById("demo").innerHTML = img_urls;
+
+	  // back filling
+	  rows = 0
+	  img_urls_lazy = ""
+	  for (;i < arr.length && rows < 10; i++, rows++) {
+		var text = arr[i].value.tags
+		var image = encodeURIComponent(text)
+		img_urls_lazy += "<div><img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" +
+	    		arr[i].value.uuid + " alt=centered image/></div>"
+	}
+  };
+
+  function run_albumload() {
     var xmlhttp  = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            var txt = ""
-            var img_urls = ""
-            var arr = JSON.parse(xmlhttp.responseText)
+            //var txt = ""
+            //var img_urls = ""
+            arr = JSON.parse(xmlhttp.responseText)
             console.log('\nlog: ' + arr.length)
             console.log('\nlog: ' + arr)
+	    show_images()
+	    /*
             for (var i in arr) {
                 text = arr[i].value.tags
                 image = encodeURIComponent(text)
@@ -56,14 +95,16 @@ img {
                     arr[i].value.uuid + " alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
+	    */
         }
     };
-    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbums');
-    xmlhttp.send();
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
+    xmlhttp.send("album_value");
   }
 
+
 document.addEventListener("DOMContentLoaded", function() {
-   run_albumsearch();
+   run_albumload();
 });
 
 </script>  

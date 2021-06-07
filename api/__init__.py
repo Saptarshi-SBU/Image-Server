@@ -74,13 +74,16 @@ class Home(Resource):
 class WelcomeBanner(Resource):
 
     def get(self):
-        img_uuid = DBGetUserImage(session["user_id"])
-	if img_uuid:
-            response = make_response(ProcessImage(GetPath(img_uuid), int(20)))
-	else:
-            response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
-        response.headers.set('Content-Type', 'image/jpg')
-        return response
+	user_id = session.get("user_id")
+	if user_id:
+		img_uuid = DBGetUserImage(session["user_id"])
+		if img_uuid:
+			response = make_response(ProcessImage(GetPath(img_uuid), int(20)))
+			response.headers.set('Content-Type', 'image/jpg')
+			return response
+	response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
+	response.headers.set('Content-Type', 'image/jpg')
+	return response
 
 class Favicon(Resource):
 
@@ -152,7 +155,7 @@ class ListGPhotos(Resource):
 	    h_arr = request.args.getlist("height")
 	    for w,h in zip(w_arr, h_arr):
 	         l.append((w,h))
-	    print "cookie", request.cookies.get('user_id')
+	    #print "cookie", request.cookies.get('user_id')
 	    #standard_sizes = set([ ("3024", "4032")])
 	    result = FilterPhotosPotraitStyle(0, 3000, set(l), "Google")
 	    img_list_string = json.dumps(result)
@@ -290,7 +293,7 @@ class GetMyAlbum(Resource):
 
     def get(self):
             img_album = urllib.unquote(request.args.get('img'))
-            with open('api/templates/show_album.html', 'r') as fp:
+            with open('api/templates/show_albums_tile.html', 'r') as fp:
                 data = fp.read()
                 data = data.replace("album_value", str(img_album))
 		data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
@@ -368,6 +371,7 @@ class Login(Resource):
 		session["user_id"] = request.form.get('email')
 		res = make_response(flask.redirect(url_for('api.home')))
 		#res.set_cookie('user_id', str(uuid.uuid4()), max_age=60*60*24*365*2)
+		#print (session["user_id"])
 		return res
 	    else:
 	    	return make_response(flask.redirect(url_for('api.signup')))

@@ -179,6 +179,7 @@ label {
     formData.set('album',     album.value);
 
     var xmlhttp  = new XMLHttpRequest();
+    /*
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             var txt = ""
@@ -194,7 +195,9 @@ label {
             document.getElementById("demo").innerHTML = img_urls;
         }
     };
+    */
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/search');
+    //xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=' + formData);
     xmlhttp.send(formData);
     console.log('sending album ' + album.value)
   };

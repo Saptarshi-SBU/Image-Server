@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset=utf-8 />
 <style>
 
 p {
@@ -9,59 +10,38 @@ p {
 }
 
 img { 
-    width: 80%; 
-    height: 60%; 
+    max-height: 100%; 
 }
 
 .marginauto {
     margin: 10px auto 20px;
-    //display: none;
 }
 
 .marginauto_cap {
     margin: 10px auto 20px;
     text-align: center;
-    height: 32px; 
-    font-size: 32px;
-}
-
-.btn-group button {
-  background-color: #4CAF50; /* Green background */
-  //border: 1px solid green; /* Green border */
-  color: black; /* White text */
-  padding: 10px 24px; /* Some padding */
-  cursor: pointer; /* Pointer/hand icon */
-  float:  right; /* Float the buttons side by side */
-  height: 32px;
-  width: 64px;
-  font-size: 8px;
+    height: 12px; 
+    font-size: 12px;
 }
 
 </style>
 </head>
 
-<div align="center" style="font-size: 24px;" >
-    <a href="http://$SERVER_HOST_IP:4040/api/v1/">Home</a>
-</div>
 <div class="w3-content", align="center">
   <font size=+1 color="blue"> High Resolution </font>
-  <figure>
   <img class="marginauto" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09&scale=50" alt="centered">
-  <!-- <div class="marginauto_cap"> <figcaption id="icaption">Image Description </figcaption> </div> -->
-  </figure>
+<div class="marginauto_cap">
+  <button id="button1" onclick="run_like_unlike()" style="height:24px;width:32px;font-size:16px">&#9825;</button>
+  <button id="button2" onclick="run_delete()" style="height:24px;width:32px;font-size:16px">&#9986;</button>
+  <button id="button3" onclick="run_background()" style="height:24px;width:32px;font-size:16px">&#9734;</button>
+  <button id="button4" onclick="run_download()" style="height:24px;width:32px;font-size:16px">&#8595;</button>
+  <button id="button5" onclick="location.href='http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09'" style="height:24px;width:32px;font-size:16px">&#x1F50D;</button>
+</div>
+
 <div align="center">
     <label class=marginauto_cap for="tag"> </label>
-    <input id='tag-input'  name='tag' type='text' style="height: 24px; width: 360px; font-size: 24px;"> </input>
+    <input id='tag-input'  name='tag' type='text' style="height: 16px; width: 360px; font-size: 16px;"> </input>
     <p><button onclick="run_edit()" style="font-size: 12px;"> Comments </button></p>
-</div>
-<div class="marginauto_cap">
-<!--
-  <button onclick="run_like()"> LIKE </button>
-  <button onclick="run_unlike()"> UNLIKE </button>
-  <button onclick="run_delete()"> DELETE </button>
-  <p><a href="http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" style="font-size: 24px;
-  text-decoration:none" download="ca509b27-cd33-45ab-9d71-6e1e2df48b09.jpg">Download</a></p>
-  -->
 </div>
 </div>
 
@@ -69,27 +49,6 @@ img {
 
 // holds json for all photos
 var json_template = '{ "value" : { "uuid" : "ca509b27-cd33-45ab-9d71-6e1e2df48b09", "tags" : " " } }'
-
-function run_like() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/likephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-}
-
-function run_unlike() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/unlikephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-}
-
-function run_delete() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/deletephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-}
 
 function run_edit() {
     newcap = document.getElementById("tag-input")
@@ -110,6 +69,56 @@ function run_edit() {
     console.log(newcap.value)
 }
 
+function run_like() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/likephoto", true);
+    obj = JSON.parse(json_template);
+    xmlhttp.send(obj.value.uuid);
+}
+
+function run_unlike() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/unlikephoto", true);
+    obj = JSON.parse(json_template);
+    xmlhttp.send(obj.value.uuid);
+}
+
+function run_like_unlike(elem) {
+    const whiteHeart = '&#9825;';
+    const blackHeart = '&#9829;';
+
+    elem = document.getElementById("button1")
+    const like = elem.textContent;
+    if (like == whiteHeart) {
+        elem.textContent = blackHeart;
+        run_like();
+    } else {
+        elem.textContent = whiteHeart;
+        run_unlike();
+    }
+}
+
+function run_delete() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            console.log(uuid + ' deleted')
+        }
+    };
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/deletephoto", true);
+    obj = JSON.parse(json_template);
+    xmlhttp.send(obj.value.uuid);
+    console.log(uuid + ' deleting')
+}
+
+function run_wall(elem) {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/wallphoto", true);
+    obj = JSON.parse(json_template);
+    xmlhttp.send(obj.value.uuid);
+    console.log(uuid + ' set wall image')
+}
+
 function run_download() {
     xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -119,8 +128,29 @@ function run_download() {
             console.log(this.status)
         }
     };
+    xmlhttp.onload = function() {
+        if (this.status == 200) {
+	  // Create a new Blob object using the response data of the onload object
+          var blob = new Blob([this.response], {type: 'image/jpg'});
+          //Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
+          let a = document.createElement("a");
+          a.style = "display: none";
+          document.body.appendChild(a);
+          //Create a DOMString representing the blob and point the link element towards it
+          let url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = 'my_image.jpg';
+          //programatically click the link to trigger the download
+          a.click();
+          //release the reference to the file by revoking the Object URL
+          window.URL.revokeObjectURL(url)
+	} else {
+	  console.log('\nerror downloading :' + this.status)
+	}
+    }
     obj = JSON.parse(json_template);
     xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/downloadphoto?img=" + obj.value.uuid, true);
+    xmlhttp.responseType = 'blob';
     xmlhttp.send(obj.value.uuid);
     console.log('download :' + obj.value.uuid)
 }

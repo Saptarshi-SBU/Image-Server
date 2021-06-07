@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+a {
+    text-decoration: none;
+}
+
+/* Clear floats after the columns */
+.row:after {
+      row-gap: 0;
+      content: "";
+      display: table;
+      clear: both;
+}
+
+img { 
+    width: 98%; 
+}
+
+.column {
+      float: left;
+      width: 33%;
+      padding: 0px;
+      display: table;
+}
+
+.header {
+	text-align: center;
+}
+
+span
+{
+    background-color: white;
+}
+
+span:first-child
+{
+    background: transparent;
+    float: left;
+}
+
+span:last-child
+{
+    background: transparent;
+    float: right;
+}
+
+</style>
+</head>
+
+<style type="text/css">
+       a:link {color: blue;}      /* unvisited link */
+       a:visited {color: blue;}   /* visited link */
+       a:hover {color: blue;}     /* mouse over link */
+       a:active {color: blue;}    /* selected link */
+
+</style>
+
+<div class="header">
+	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value="<<" onclick="run_backward()"></input></span>
+	<span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/">album_value </a></span>
+	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value=">>" onclick="run_forward()" ></input></span>
+</div>
+
+<div class="row">
+    <div class="column"><h2><a id="a1" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2> </div>
+    <div class="column"><h2><a id="a2" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2> </div>
+    <div class="column"><h2><a id="a3" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2> </div>
+</div> 
+
+<div class="row">
+    <div class="column"><h2><a id="a4" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img4" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+    <div class="column"><h2><a id="a5" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img5" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+    <div class="column"><h2><a id="a6" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img6" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+</div>
+
+<div class="row">
+    <div class="column"><h2><a id="a7" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img7" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+    <div class="column"><h2><a id="a8" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img8" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+    <div class="column"><h2><a id="a9" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"><img id="img9" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2></div>
+</div>
+
+<script>
+
+var arr;
+var next = 0;
+
+function run_forward() {
+	show_images()
+}
+
+function run_backward() {
+	next = next - 2*9;
+	if (next < 0)
+		next = 0;
+	show_images()
+}
+
+function show_images() {
+    var i = 0;
+    if (next >= arr.length)
+	return;
+    for (i = next, k = 1; i < next + 9; i++, k++) {
+        if (i < arr.length) {
+    	    var img_urls = ""
+            console.log("img"+ k)
+            newimg = document.getElementById("img" + k)
+            newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+	    newref = document.getElementById("a"+k)
+	    newref.href = "http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid
+            newimg.style.display = "table";
+            console.log(i + ': ' + arr[i].value.uuid + ' : ' + arr[i].value.like)
+        } else {
+            newimg = document.getElementById("img" + k)
+            newimg.style.display = "none"
+            label = document.getElementById('label' + k);
+            label.innerHTML = ""
+        }
+    }
+    next = i
+}
+
+function show_album() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            arr = JSON.parse(xmlhttp.responseText)
+            console.log('\nlog: ' + arr.length)
+            console.log('\nlog: ' + arr)
+	    show_images()
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
+    xmlhttp.send("album_value");
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+     show_album();
+});
+
+
+</script>
+</body>
+
+</html>
