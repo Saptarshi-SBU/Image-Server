@@ -19,7 +19,7 @@ from flask import Flask, Blueprint, send_file, request, make_response, send_from
 from .db.DB import InitPhotosDb
 from .db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -193,13 +193,18 @@ class ListGPhotos(Resource):
 
 class ListObjectPhotos(Resource):
 
-    def get(self):
-        result = FilterLabeledPhotos("person", skip=True)
-        img_list_string = json.dumps(result)
-        response = make_response(img_list_string)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.set('Content-Type', 'application/json')
-        return response
+	def get(self):
+		l = []
+		w_arr = request.args.getlist("width")
+		h_arr = request.args.getlist("height")
+		for w, h in zip(w_arr, h_arr):
+			l.append((w, h))
+		result = FilterLabeledPhotosPotraitStyle("person", set(l), skip=True)
+		img_list_string = json.dumps(result)
+		response = make_response(img_list_string)
+		response.headers.add('Access-Control-Allow-Origin', '*')
+		response.headers.set('Content-Type', 'application/json')
+		return response
 
 
 class ViewPhotos(Resource):

@@ -32,7 +32,7 @@ def ScanAddPhotosDimensionII():
 	count = 0
 	photos = []
 	result = DBGetPhotoNullDimensions()
-	print ('nr entries:', len(result))
+	print ('photos dimensions scanner, new entries:', len(result))
 	for photo in result:
 		count = count + 1
 		with DBManager() as db:
@@ -49,4 +49,4 @@ def ScanAddPhotosDimensionII():
 if __name__ == "__main__" :
 	while True:
 		ScanAddPhotosDimensionII()
-		time.sleep(60)
+		time.sleep(300)

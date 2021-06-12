@@ -200,6 +200,20 @@ def FilterLabeledPhotos(object_name, skip=False):
 			#photoPaths.append(photo.UUID)
 	return photoPaths
 
+def FilterLabeledPhotosPotraitStyle(object_name, standard_sizes, skip=False):
+	photos = []
+	result = FilterLabeledPhotos(object_name, skip)
+	for photo in result:
+		w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
+		#print (w, h, standard_sizes)
+		if (w, h) not in standard_sizes:
+			continue
+		photo["value"]["width"] = int(w)
+		photo["value"]["height"] = int(h)
+		photos.append(photo)
+		#print (photo)
+	return photos
+
 def FilterPhotoAlbums():
 	photoPaths = {}
 	photoList = []
@@ -216,7 +230,7 @@ def FilterPhotoAlbums():
 						PhotoModel.DayTime
 						).all()
 
-	random.shuffle(result)
+	#random.shuffle(result)
 
 	#unique albums
 	for photo in result:

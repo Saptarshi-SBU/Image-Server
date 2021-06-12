@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+
+img { 
+    max-height: 100%;
+    width: auto;
+    display: None
+}
+
+.marginauto {
+    margin: 10px auto 20px;
+}
+
+.marginauto_cap {
+    text-align: center;
+    font-size: 24px;
+}
+
+</style>
+</head>
+
+<p id="demo"></p>
+
+<div align="center">
+    <img class="margin" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+    <div class="marginauto_cap" style="color:blue;"> <figcaption id="icaption">Loading... </figcaption> </div>
+</div>
+
+<script>
+
+// holds json for all photos
+var i = 0;
+var arr;
+
+function run_next() {
+    var total = arr.length
+    newimg = document.getElementById("img")
+    newimg.style.opacity = 0;
+    newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+    newimg.title = arr[i].value.name + "(" + arr[i].value.date + ")"
+    newimg.style.display = "block";
+    newimg.style.opacity = 1;
+    newimg.style.minWidth = "90%";
+    newimg.style.minHeight = "90%";
+    newcap = document.getElementById("icaption")
+    newcap.innerHTML = arr[i].value.tags + " " + "(" + i.toString() + "/" + total.toString() + ")"
+    newcap.style.display = "block";
+    i = (i + 1) % arr.length;
+    setTimeout(run_next, 15000);
+}
+
+xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
+            arr = JSON.parse(xmlhttp.responseText)
+            run_next();
+    } else {
+        console.log(this.status)
+    }
+};
+xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/listlabeledphotos?width=6016&height=4000", true);
+xmlhttp.send();
+
+</script>
+
+</html>
