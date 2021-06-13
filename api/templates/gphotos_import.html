@@ -2,50 +2,46 @@
 <html>
 <body>
 
-<h2>My CloudPhotos Syncer</h2>
+<h2>My GooglePhotos Syncer</h2>
 
 <form>
   <a href="http://$SERVER_HOST_IP:4040/api/v1/import" target="_blank">Click to Authorize</a><br><br>
   <label for="name"> Refresh Token:</label><br>
   <input type="text" id="token" value=""><br><br></input>
   <input type="submit" style="height:24px;width:64px;font-size:14px;color:blue;" value="Submit" onclick="run_import()"><br><br></input>
-  <label for="file">Downloading progress:</label>
+  <label for="file">Download progress:</label>
 	<progress id="progressbar" value="0" max="100"> 0% </progress>
 </form> 
 
 <script>
 
-function probe_download() {
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            	arr = JSON.parse(xmlhttp.responseText)
-		n = parseInt(arr[0])
-		total = parseInt(arr[1])
-		if (total > 0) {
-    			elem = document.getElementById("progressbar");
-			elem.value = ((n * 100) / total).toFixed(2)
-		}
-		console.log("check import status:" + arr)
-    		setTimeout(probe_download, 1000);
-        }
-    };
-    xmlhttp.open("GET", 'http://$SERVER_HOST_IP:4040/api/v1/importstatus');
-    xmlhttp.send();
-}
-
 function run_import() {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-		console.log("running sync photos")
-    		setTimeout(probe_download, 1000);
+		    console.log("running sync photos");
+        } else {
+            console.log("sync status :" + this.status);
+            console.log("readyState :"  + this.readyState);
         }
     };
+    xmlhttp.onerror = function (e) {
+        console.error(xmlhttp.statusText);
+    };
     elem = document.getElementById("token");
-    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/import');
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/import', true);
     xmlhttp.send(elem.value);
     console.log(elem.value)
+}
+
+var source = new EventSource('http://$SERVER_HOST_IP:4040/api/v1/importstatus');
+source.onmessage = function(event) {
+    elem = document.getElementById("progressbar")
+    console.log("new message :", event.data)
+    elem.value = event.data
+    if(event.data == 100){
+        source.close()
+    }
 }
 
 </script>

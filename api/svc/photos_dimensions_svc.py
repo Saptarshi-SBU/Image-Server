@@ -12,7 +12,7 @@ from ..image_processing.filtering import GetImageDimensions
 def ScanAddPhotosDimension():
 	count = 0
 	photos = []
-	result = FilterPhotos(0, 3000, None)
+	result = FilterPhotos(None, 0, 3000, None)
 	for photo in result:
 		count = count + 1
 		w, h = DBGetPhotoDimensions(photo["value"]["uuid"])

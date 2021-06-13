@@ -13,9 +13,10 @@ import urllib
 import traceback
 import flask
 import functools
+import threading
 from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
-from flask import Flask, Blueprint, send_file, request, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
+from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import InitPhotosDb
 from .db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
@@ -29,14 +30,16 @@ from flask_mail import Mail, Message
 import pymysql
 pymysql.install_as_MySQLdb()
 
+#task entries
+tasklist = []
+
 # configured via api.cfg
 HOST_ADDRESS = GetHostIP()
 
 # mail object
 app_mail = None
-app_mail_sender = "saptarshi.mrg@gmail.com"
-app_main_receiver = "saptarshi.mrg@gmail.com"
-
+app_mail_sender = os.Environ.get("MAIL_ID")
+app_main_receiver = os.Environ.get("MAIL_ID")
 
 def checklogin(method):
     @functools.wraps(method)
@@ -154,7 +157,7 @@ class GetPhotoScaled(Resource):
 class ListPhotos(Resource):
 
     def get(self):
-        img_list_string = json.dumps(LookupPhotos())
+        img_list_string = json.dumps(LookupPhotos(session.get("user_id")))
         # print 'json {}'.format(img_list_string)
         response = make_response(img_list_string)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -165,7 +168,7 @@ class ListPhotos(Resource):
 class ListLikePhotos(Resource):
 
     def get(self):
-        img_list_string = json.dumps(LookupPhotos(like=True))
+        img_list_string = json.dumps(LookupPhotos(session.get("user_id"), like=True))
         # print 'json {}'.format(img_list_string)
         response = make_response(img_list_string)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -183,7 +186,7 @@ class ListGPhotos(Resource):
             l.append((w, h))
         # print "cookie", request.cookies.get('user_id')
         #standard_sizes = set([ ("3024", "4032")])
-        result = FilterPhotosPotraitStyle(0, 3000, set(l), "Google")
+        result = FilterPhotosPotraitStyle(session.get("user_id"), 0, 3000, set(l), "Google")
         img_list_string = json.dumps(result)
         response = make_response(img_list_string)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -199,7 +202,7 @@ class ListObjectPhotos(Resource):
 		h_arr = request.args.getlist("height")
 		for w, h in zip(w_arr, h_arr):
 			l.append((w, h))
-		result = FilterLabeledPhotosPotraitStyle("person", set(l), skip=True)
+		result = FilterLabeledPhotosPotraitStyle(session.get("user_id"), "person", set(l), skip=True)
 		img_list_string = json.dumps(result)
 		response = make_response(img_list_string)
 		response.headers.add('Access-Control-Allow-Origin', '*')
@@ -290,7 +293,8 @@ class UploadPhotos(Resource):
 
     def post(self):
         # print type(request.files['file'])
-        InsertPhoto(request.files['file'].filename,
+        InsertPhoto(session.get("user_id"),
+                    request.files['file'].filename,
                     request.files['file'].read(),
                     request.form["tag"])
         response = make_response()
@@ -313,7 +317,7 @@ class SearchPhotos(Resource):
         print(request.form['from_year'])
         print(request.form['to_year'])
         print(request.form['album'])
-        result = FilterPhotos(
+        result = FilterPhotos(session.get("user_id"),
             request.form['from_year'], request.form['to_year'], request.form['album'])
         result = json.dumps(result)
         response = make_response(result)
@@ -325,7 +329,7 @@ class GetMyAlbums(Resource):
 
     @checklogin
     def post(self):
-        result = FilterPhotoAlbums()
+        result = FilterPhotoAlbums(session.get("user_id"))
         result = json.dumps(result)
         # print result
         response = make_response(result)
@@ -347,7 +351,7 @@ class GetMyAlbum(Resource):
 
     def post(self):
         img_album = request.data
-        result = GetAlbumPhotos(img_album)
+        result = GetAlbumPhotos(session.get("user_id"), img_album)
         result = json.dumps(result)
         # print img_album, result
         response = make_response(result)
@@ -466,7 +470,6 @@ class AuthorizeImportPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
-
 class ImportPhotos(Resource):
 
     def get(self):
@@ -483,9 +486,12 @@ class ImportPhotos(Resource):
     def post(self):
         refresh_token = request.data  # request.form.get("token")
         print('request.data :' + refresh_token.decode("utf-8"))
-        SyncPhotos(session.get("user_id"), refresh_token.decode("utf-8"))
+        thread = threading.Thread(target=SyncPhotos, args=(session.get("user_id"), refresh_token.decode("utf-8")))
+        #SyncPhotos(session.get("user_id"), refresh_token.decode("utf-8"))
+        thread.daemon = True
+        tasklist.append(thread)
+        thread.start()
         return make_response()
-
 
 class ImportPhotosStatus(Resource):
 
@@ -498,12 +504,13 @@ class ImportPhotosStatus(Resource):
         #msg = Message('SaptarshiApp', sender = app_mail_sender, recipients = [ app_main_receiver ])
         #msg.body = "An import task has been launched"
         # app_mail.send(msg)
-        tup = SyncPhotosStatus(session.get("user_id"))
-        jsonObj = json.dumps(tup)
-        response = make_response(jsonObj)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        return response
-
+        def generate(user_id):
+            p = 0
+            while p <= 100:
+                yield "data:" + str(p) + "\n\n"
+                p = p + SyncPhotosStatus(user_id)
+                time.sleep(1)
+        return Response(generate(session.get("user_id")), mimetype= 'text/event-stream')
 
 class PhotoLabel(Resource):
 
@@ -543,7 +550,7 @@ app = Flask(__name__, template_folder='templates')
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = app_mail_sender
-app.config['MAIL_PASSWORD'] = 'Nitj@4031'
+app.config['MAIL_PASSWORD'] = os.Environ.get("MAIL_PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"

@@ -40,12 +40,13 @@ class PhotoModel(Base):
     Tags = Column(String(stringLen), nullable=True)
     Likes = Column(String(stringLen), nullable=True)
     DayTime = Column(Integer, nullable=False)
+    Username = Column(String(stringLen), nullable=False)
 
     def __repr__(self):
         return "<%s(UUID : %s, Name :%s Digest :%s Year : %d, Month : %d " \
-            "Day : %d NameSpace : %s NameSpace_Medium : %s Tags :%s Daytime :%d)" % (self.__tablename__, \
+            "Day : %d NameSpace : %s NameSpace_Medium : %s Tags :%s Daytime :%d User :%s)" % (self.__tablename__, \
             self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
-            self.NameSpace_Medium, self.Tags, self.DayTime)
+            self.NameSpace_Medium, self.Tags, self.DayTime, self.Username)
 
 class LabelModel(Base):
     """
@@ -67,6 +68,8 @@ class UserModel(Base):
     Username = Column(String(stringLen), primary_key=True)
     Password = Column(String(stringLen), nullable=False)
     ImageUUID = Column(String(64), nullable=False)
+    GooglePhotosClientId = Column(String(stringLen), nullable=False)
+    GooglePhotosSecretKey = Column(String(stringLen), nullable=False)
 
     def __repr__(self):
         return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
@@ -88,7 +91,7 @@ def DBGetPhotos(_dbSession):
     """
         fetches all records
     """
-    return _dbSession.query(PhotoModel).all()
+    return _dbSession.query(PhotoModel).filall()
 
 def DBGetPhoto(_dbSession, imgUUID):
     """
@@ -97,7 +100,7 @@ def DBGetPhoto(_dbSession, imgUUID):
     return _dbSession.query(PhotoModel).filter \
         (PhotoModel.UUID==UUID).first()
 
-def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, DayTime, NameSpace, NameSpace_Medium='', Tags=''):
+def DBAddPhoto(_dbSession, UUID, Username, Name, Digest, Year, Month, Day, DayTime, NameSpace, NameSpace_Medium='', Tags=''):
     """
         insert record
     """
@@ -110,7 +113,8 @@ def DBAddPhoto(_dbSession, UUID, Name, Digest, Year, Month, Day, DayTime, NameSp
                        NameSpace=NameSpace, \
                        NameSpace_Medium=NameSpace_Medium, \
                        Tags=Tags, \
-                       DayTime=DayTime)
+                       DayTime=DayTime, \
+                       Username=Username)
     _dbSession.add(photo)
     return photo
 

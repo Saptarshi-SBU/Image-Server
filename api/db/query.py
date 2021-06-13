@@ -69,12 +69,12 @@ def SortbyDate(jsonData):
 	dt = datetime.date(year=year, month=month, day=day)
 	return dt
 
-def LookupPhotos(like=False):
+def LookupPhotos(user_name, like=False):
 	photoPaths = []
 	with DBManager() as db:
 		_dbSession = db.getSession()
 		if like:
-			result = _dbSession.query(PhotoModel).filter((PhotoModel.Likes == "Like")).order_by(
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter((PhotoModel.Likes == "Like")).order_by(
 						PhotoModel.Year.desc()
 						).order_by(
 						PhotoModel.Month.desc()
@@ -84,7 +84,7 @@ def LookupPhotos(like=False):
 						PhotoModel.DayTime
 						)
 		else:
-			result = _dbSession.query(PhotoModel).order_by(
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).order_by(
 						PhotoModel.Year.desc()
 						).order_by(
 						PhotoModel.Month.desc()
@@ -98,13 +98,13 @@ def LookupPhotos(like=False):
 			photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
 	return photoPaths
 
-def GetAlbumPhotos(album):
+def GetAlbumPhotos(user_name, album):
 	photoPaths = []
 	result = []
 
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		result = _dbSession.query(PhotoModel).filter(PhotoModel.Tags == album) \
+		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album) \
 						.order_by(
 						PhotoModel.Year.desc()
 						).order_by(
@@ -121,7 +121,7 @@ def GetAlbumPhotos(album):
 			#photoPaths.append(photo.UUID)
 		return photoPaths
 
-def FilterPhotos(start_year, to_year, album=None):
+def FilterPhotos(user_name, start_year, to_year, album=None):
 	photoPaths = []
 	result = []
 
@@ -136,7 +136,7 @@ def FilterPhotos(start_year, to_year, album=None):
 		_dbSession = db.getSession()
 		if album:
 			search = "%{}%".format(album)
-			result = _dbSession.query(PhotoModel).filter(PhotoModel.Tags.ilike(search)) \
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags.ilike(search)) \
 						.order_by(
 						PhotoModel.Year.desc()
 						).order_by(
@@ -149,7 +149,7 @@ def FilterPhotos(start_year, to_year, album=None):
 			result = [ photo for photo in result if photo.Year >= int(start_year) and \
 				photo.Year <= int(to_year) ]
 		else:
-			result = _dbSession.query(PhotoModel).filter(and_(PhotoModel.Year >= int(start_year),
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(and_(PhotoModel.Year >= int(start_year),
 						 PhotoModel.Year <= int(to_year))) \
 						.order_by(
 						PhotoModel.Year.desc()
@@ -168,9 +168,9 @@ def FilterPhotos(start_year, to_year, album=None):
 
 	return photoPaths
 
-def FilterPhotosPotraitStyle(start_year, to_year, standard_sizes, album=None):
+def FilterPhotosPotraitStyle(user_name, start_year, to_year, standard_sizes, album=None):
 	photos = []
-	result = FilterPhotos(start_year, to_year, album)
+	result = FilterPhotos(user_name, start_year, to_year, album)
 	for photo in result:
 		w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
 		if (w, h) not in standard_sizes:
@@ -181,7 +181,7 @@ def FilterPhotosPotraitStyle(start_year, to_year, standard_sizes, album=None):
 		#print (photo)
 	return photos
 
-def FilterLabeledPhotos(object_name, skip=False):
+def FilterLabeledPhotos(user_name, object_name, skip=False):
 	photoPaths = []
 
 	with DBManager() as db:
@@ -189,20 +189,20 @@ def FilterLabeledPhotos(object_name, skip=False):
 		if skip:
 			result = _dbSession.query(PhotoModel)\
 				.join(LabelModel, PhotoModel.UUID==LabelModel.UUID)\
-				.filter(~LabelModel.Labels.contains(object_name)).all()
+				.filter(~LabelModel.Labels.contains(object_name)).filter(PhotoModel.Username==user_name).all()
 		else:
 			result = _dbSession.query(PhotoModel)\
 				.join(LabelModel, PhotoModel.UUID==LabelModel.UUID)\
-				.filter(LabelModel.Labels.contains(object_name)).all()
+				.filter(LabelModel.Labels.contains(object_name)).filter(PhotoModel.Username==user_name).all()
 		for photo in result:
 			photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
 				photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
 			#photoPaths.append(photo.UUID)
 	return photoPaths
 
-def FilterLabeledPhotosPotraitStyle(object_name, standard_sizes, skip=False):
+def FilterLabeledPhotosPotraitStyle(user_name, object_name, standard_sizes, skip=False):
 	photos = []
-	result = FilterLabeledPhotos(object_name, skip)
+	result = FilterLabeledPhotos(user_name, object_name, skip)
 	for photo in result:
 		w, h = DBGetPhotoDimensions(photo["value"]["uuid"])
 		#print (w, h, standard_sizes)
@@ -214,13 +214,13 @@ def FilterLabeledPhotosPotraitStyle(object_name, standard_sizes, skip=False):
 		#print (photo)
 	return photos
 
-def FilterPhotoAlbums():
+def FilterPhotoAlbums(user_name):
 	photoPaths = {}
 	photoList = []
 	result = []
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		result = _dbSession.query(PhotoModel).order_by(
+		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).order_by(
 						PhotoModel.Year.desc()
 						).order_by(
 						PhotoModel.Month.desc()
@@ -252,16 +252,16 @@ def FilterPhotoAlbums():
 	with DBManager() as db:
 		_dbSession = db.getSession()
 		for key in photoPaths:
-			photoPaths[key]["value"]["count"] = _dbSession.query(PhotoModel).filter(PhotoModel.Tags == key).count()
+			photoPaths[key]["value"]["count"] = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == key).count()
 			photoList.append(photoPaths[key])
 
 	photoList.sort(key=SortbyDate, reverse=True)
 	return photoList
 
-def TestDuplicate(sourceBlob, digest):
+def TestDuplicate(user_name, sourceBlob, digest):
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		result = _dbSession.query(PhotoModel).filter((PhotoModel.Digest == digest)).all()
+		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter((PhotoModel.Digest == digest)).all()
 		for photo in result:
 			imgPath = '{}/{}.JPG'.format(photo.NameSpace, photo.UUID)
 			print (imgPath)
@@ -271,12 +271,12 @@ def TestDuplicate(sourceBlob, digest):
 					return True
 	return False
 
-def InsertPhoto(filename, fileBlob, description):
+def InsertPhoto(user_name, filename, fileBlob, description):
 	img_dir = GetImageDir(CONFIG_FILE)
 	img_uuid = uuid.uuid4()
 	digest = comp_checksum(fileBlob)
 
-	if TestDuplicate(fileBlob, digest):
+	if TestDuplicate(user_name, fileBlob, digest):
 		print ("Detected duplicate entry")
 		return;
 
@@ -291,7 +291,7 @@ def InsertPhoto(filename, fileBlob, description):
 
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		DBAddPhoto(_dbSession, img_uuid, filename, digest, \
+		DBAddPhoto(_dbSession, img_uuid, user_name, filename, digest, \
 			year, month, day, secs, img_dir, " ", description)
 		_dbSession.commit()
 	print ('{} saved to disk'.format(filename))
@@ -325,11 +325,11 @@ def UpdatePhotoTag(img_uuid, tag):
 		_dbSession.commit()
 		print ('Updated {} {}'.format(img_uuid, tag))
 
-def AutoCompleteAlbum(text):
+def AutoCompleteAlbum(user_name, text):
 	tl = []
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		for value in _dbSession.query(PhotoModel.Tags).distinct():
+		for value in _dbSession.query(PhotoModel.Tags).filter(PhotoModel.Username==user_name).distinct():
 			tl.append(value[0].lower())
 	return AutoComplete(tl, text)
 
@@ -436,6 +436,24 @@ def DBSetUserImage(username, image_uuid):
 		else:
 			print ('invalid user name :{}'.format(username))
 			return None
+
+def DBGetUserGooglePhotosCredentials(username):
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(UserModel).filter(UserModel.Username==username).first()
+		if result:
+			return (result.GooglePhotosClientId, result.GooglePhotosSecretKey)
+		else:
+			return None
+
+def DBSetUserGooglePhotosCredentials(username, client_id, secret_key):
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(UserModel).filter(UserModel.Username==username).first()
+		if result:
+			result.GooglePhotosClientId = client_id
+			result.GooglePhotosSecretKey = secret_key
+			_dbSession.commit()
 
 def DBGetPhotoDimensions(imgUUID):
 	"""
