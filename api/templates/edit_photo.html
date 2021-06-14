@@ -35,6 +35,7 @@ img {
   <button id="button2" onclick="run_delete()" style="height:24px;width:32px;font-size:16px">&#9986;</button>
   <button id="button3" onclick="run_background()" style="height:24px;width:32px;font-size:16px">&#9734;</button>
   <button id="button4" onclick="run_download()" style="height:24px;width:32px;font-size:16px">&#8595;</button>
+  <button id="button6" onclick="run_grayscale()" style="height:24px;width:32px;font-size:16px">&#x25BC;</button>
   <button id="button5" onclick="location.href='http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09'" style="height:24px;width:32px;font-size:16px">&#x1F50D;</button>
 </div>
 
@@ -116,7 +117,7 @@ function run_wall(elem) {
     xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/wallphoto", true);
     obj = JSON.parse(json_template);
     xmlhttp.send(obj.value.uuid);
-    console.log(uuid + ' set wall image')
+    console.log(obj.value.uuid + ' set wall image')
 }
 
 function run_download() {
@@ -144,9 +145,9 @@ function run_download() {
           a.click();
           //release the reference to the file by revoking the Object URL
           window.URL.revokeObjectURL(url)
-	} else {
-	  console.log('\nerror downloading :' + this.status)
-	}
+	    } else {
+	      console.log('\nerror downloading :' + this.status)
+	    }
     }
     obj = JSON.parse(json_template);
     xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/downloadphoto?img=" + obj.value.uuid, true);
@@ -154,5 +155,35 @@ function run_download() {
     xmlhttp.send(obj.value.uuid);
     console.log('download :' + obj.value.uuid)
 }
+
+function run_grayscale(elem) {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            const byteCharacters = atob(this.response);
+            const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            // Create a new Blob object using the response data of the onload object
+            var blob = new Blob([byteArray], {type: 'image/jpg'});
+            url = window.URL.createObjectURL(blob)
+            newimg = document.getElementById("img")
+            newimg.setAttribute('src', url)
+            newimg.style.maxWidth = "100%"
+            img.onload = function() {
+                window.URL.revokeObjectURL(this.src);
+            }
+        } else {
+            console.log(this.status)
+        }
+    };
+    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/grayscale", true);
+    obj = JSON.parse(json_template);
+    xmlhttp.send(obj.value.uuid);
+    console.log(obj.value.uuid + ' set gray scale')
+}
+
 </script>
 </html>

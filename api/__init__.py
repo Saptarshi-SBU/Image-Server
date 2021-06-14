@@ -21,7 +21,7 @@ from .db.DB import InitPhotosDb
 from .db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
-from .image_processing.filtering import ProcessImage
+from .image_processing.filtering import ProcessImage, ProcessImageGrayScale
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
@@ -38,8 +38,8 @@ HOST_ADDRESS = GetHostIP()
 
 # mail object
 app_mail = None
-app_mail_sender = os.Environ.get("MAIL_ID")
-app_main_receiver = os.Environ.get("MAIL_ID")
+app_mail_sender = os.environ.get("MAIL_ID")
+app_main_receiver = os.environ.get("MAIL_ID")
 
 def checklogin(method):
     @functools.wraps(method)
@@ -540,17 +540,30 @@ class PhotoNotLabel(Resource):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
+#405 (METHOD NOT ALLOWED)
+class PhotoGrayScale(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print (request.data)
+        img_uuid = request.data.decode("utf-8")
+        print (img_uuid)
+        data = ProcessImageGrayScale(GetPath(img_uuid))
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
 
 def page_not_found(e):
     return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
-
 
 app = Flask(__name__, template_folder='templates')
 #app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = app_mail_sender
-app.config['MAIL_PASSWORD'] = os.Environ.get("MAIL_PASSWORD")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -591,6 +604,7 @@ api.add_resource(ImportPhotosStatus, '/importstatus')
 api.add_resource(PhotoLabel, '/label')
 api.add_resource(PhotoNotLabel, '/nolabel')
 api.add_resource(SetWallPhoto, '/wallphoto')
+api.add_resource(PhotoGrayScale, '/grayscale')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')

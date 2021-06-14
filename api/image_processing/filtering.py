@@ -1,4 +1,5 @@
 import cv2
+import base64
 
 def GetImageDimensions(filepath):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
@@ -34,6 +35,19 @@ def ProcessImage(filepath, scale_percent=15):
 	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
 	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
 	return img_encoded.tostring()
+
+def ProcessImageGrayScale(filepath):
+	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
+	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+	#_, img_encoded = cv2.imencode('.jpg', img_data, encode_param)
+	#return img_encoded.tostring()
+	if img_data is None:
+	    print ("invalid image file:", filepath)
+	    return None
+	gray = cv2.cvtColor(img_data, cv2.COLOR_BGR2GRAY)
+	_, img_encoded = cv2.imencode('.jpg', gray) # encode converts to bytes
+	#base64 for being displayed inlined as a blob by js
+	return base64.b64encode(img_encoded).decode('utf-8')
 
 def TestImageSizeRatio(filepath):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
