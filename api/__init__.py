@@ -3,6 +3,7 @@
 '''
 import os
 import json
+import jsonpickle
 import time
 import gc
 #import objgraph
@@ -22,6 +23,7 @@ from .db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotra
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageGrayScale
+from .image_processing import imgcache
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
@@ -30,7 +32,7 @@ from flask_mail import Mail, Message
 import pymysql
 pymysql.install_as_MySQLdb()
 
-#task entries
+# task entries
 tasklist = []
 
 # configured via api.cfg
@@ -40,6 +42,7 @@ HOST_ADDRESS = GetHostIP()
 app_mail = None
 app_mail_sender = os.environ.get("MAIL_ID")
 app_main_receiver = os.environ.get("MAIL_ID")
+
 
 def checklogin(method):
     @functools.wraps(method)
@@ -93,18 +96,21 @@ class Home(Resource):
 
 class WelcomeBanner(Resource):
 
-	@cacheresponse
-	def get(self):
-		user_id = session.get("user_id")
-		if user_id:
-			img_uuid = DBGetUserImage(session["user_id"])
-			if img_uuid:
-				response = make_response(ProcessImage(GetPath(img_uuid), int(20)))
-				response.headers.set('Content-Type', 'image/jpg')
-				return response
-		response = make_response(ProcessImage('api/images/welcome_2.0.jpg', scale_percent=20))
-		response.headers.set('Content-Type', 'image/jpg')
-		return response
+    @cacheresponse
+    def get(self):
+        user_id = session.get("user_id")
+        if user_id:
+            img_uuid = DBGetUserImage(session["user_id"])
+            if img_uuid:
+                response = make_response(
+                    ProcessImage(GetPath(img_uuid), int(20)))
+                response.headers.set('Content-Type', 'image/jpg')
+                return response
+        response = make_response(ProcessImage(
+            'api/images/welcome_2.0.jpg', scale_percent=20))
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
 
 class Favicon(Resource):
 
@@ -124,7 +130,7 @@ class GetPhotoRaw(Resource):
     def get(self):
         img_uuid = request.args.get('img')
         if img_uuid is None:
-            return abort(400)
+            return make_response("Invalid image request", 400)
         else:
             # objgraph.show_most_common_types()
             return send_file(GetPath(img_uuid), mimetype='image/jpg')
@@ -132,26 +138,41 @@ class GetPhotoRaw(Resource):
 
 class GetPhotoScaled(Resource):
 
-    @cacheresponse
+    # @cacheresponse
     def get(self):
+        img_data = None
+        user_name = session["user_id"]
         img_uuid = request.args.get('img')
         if img_uuid is None:
-            return abort(400)
+            return make_response("Invalid image request", 400)
         else:
             scale_pc = request.args.get('scale')
             if scale_pc is None:
-                response = make_response(ProcessImage(GetPath(img_uuid)))
+                scale_pc = 15
+            if scale_pc not in imgCache:
+                imgCache[scale_pc] = imgcache.GlobalLRUCacheImg(100)
+            img_data = imgCache[scale_pc].lookup(user_name, img_uuid)
+            if not img_data:
+                print('image uuid {} not present in cache'.format(img_uuid))
+                # checked if image with medium size is processed
+                img_data = GetScaledImage(img_uuid)
+                if not img_data:
+                    img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+                if img_data:
+                    imgCache[scale_pc].insert(user_name, img_uuid, img_data)
+                    threading.Thread(target=AutoLoadAlbum, args=(
+                        imgCache, 10), daemon=True).start()
+                    #AutoLoadAlbum(imgCache, 10)
             else:
-                frame = GetScaledImage(img_uuid)
-                if frame:
-                    response = make_response(frame)
-                else:
-                    response = make_response(ProcessImage(
-                        GetPath(img_uuid), int(scale_pc)))
-                    response.headers.set('Content-Type', 'image/jpg')
-                    #response.headers.set('Content-Type', 'image/png')
-                    #print (response.content_length, scale_pc)
-            return response
+                print('image uuid {} present in cache'.format(img_uuid))
+
+            if img_data:
+                response = make_response(img_data)
+                response.headers.set('Content-Type', 'image/jpg')
+                imgCache[scale_pc].stats()
+                return response
+            else:
+                return make_response("image not found {}".format(img_uuid), 404)
 
 
 class ListPhotos(Resource):
@@ -168,7 +189,8 @@ class ListPhotos(Resource):
 class ListLikePhotos(Resource):
 
     def get(self):
-        img_list_string = json.dumps(LookupPhotos(session.get("user_id"), like=True))
+        img_list_string = json.dumps(
+            LookupPhotos(session.get("user_id"), like=True))
         # print 'json {}'.format(img_list_string)
         response = make_response(img_list_string)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -186,7 +208,8 @@ class ListGPhotos(Resource):
             l.append((w, h))
         # print "cookie", request.cookies.get('user_id')
         #standard_sizes = set([ ("3024", "4032")])
-        result = FilterPhotosPotraitStyle(session.get("user_id"), 0, 3000, set(l), "Google")
+        result = FilterPhotosPotraitStyle(
+            session.get("user_id"), 0, 3000, set(l), "Google")
         img_list_string = json.dumps(result)
         response = make_response(img_list_string)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -196,18 +219,19 @@ class ListGPhotos(Resource):
 
 class ListObjectPhotos(Resource):
 
-	def get(self):
-		l = []
-		w_arr = request.args.getlist("width")
-		h_arr = request.args.getlist("height")
-		for w, h in zip(w_arr, h_arr):
-			l.append((w, h))
-		result = FilterLabeledPhotosPotraitStyle(session.get("user_id"), "person", set(l), skip=True)
-		img_list_string = json.dumps(result)
-		response = make_response(img_list_string)
-		response.headers.add('Access-Control-Allow-Origin', '*')
-		response.headers.set('Content-Type', 'application/json')
-		return response
+    def get(self):
+        l = []
+        w_arr = request.args.getlist("width")
+        h_arr = request.args.getlist("height")
+        for w, h in zip(w_arr, h_arr):
+            l.append((w, h))
+        result = FilterLabeledPhotosPotraitStyle(
+            session.get("user_id"), "person", set(l), skip=True)
+        img_list_string = json.dumps(result)
+        response = make_response(img_list_string)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.set('Content-Type', 'application/json')
+        return response
 
 
 class ViewPhotos(Resource):
@@ -318,7 +342,7 @@ class SearchPhotos(Resource):
         print(request.form['to_year'])
         print(request.form['album'])
         result = FilterPhotos(session.get("user_id"),
-            request.form['from_year'], request.form['to_year'], request.form['album'])
+                              request.form['from_year'], request.form['to_year'], request.form['album'])
         result = json.dumps(result)
         response = make_response(result)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -337,10 +361,86 @@ class GetMyAlbums(Resource):
         return response
 
 
+def GetImgUUIDList(album_photos):
+    result = list()
+    for entry in album_photos:
+        result.append(entry['value']['uuid'])
+    return result
+
+
+class AlbumPrefetchContext(object):
+
+    def __init__(self, name, itemList):
+        self.index = 0
+        self.album = name
+        self.list = itemList
+        self.progress = False
+
+    def next(self):
+        pos = self.index
+        self.index = (self.index + 1) % len(self.list)
+        return pos
+
+    def size(self):
+        return len(self.list)
+
+    def name(self):
+        return self.album
+
+    def at(self, index):
+        return self.list[index]
+
+    def progress(self):
+        return self.progress
+
+prefetchMutex = threading.Lock()
+
+def AutoLoadAlbum(imgCache, prefetch_count=10):
+    with prefetchMutex:
+        print('Autoloading Album...')
+        scale_pc = 15
+        user_name = session.get("user_id")
+        prefetch_ctx = session.get("current_album")
+        if not prefetch_ctx:
+            print("album prefetch context not set in session cookie")
+            return
+        prefetch_ctx = jsonpickle.decode(prefetch_ctx)
+        if prefetch_ctx is True:
+            print("album prefetch already in progress")
+            return
+        prefetch_ctx.progress = True
+        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        # in case album url remains cached client side
+        if prefetch_ctx.size() == 0:
+            prefetch_ctx.index = 0
+            result = GetAlbumPhotos(user_name, prefetch_ctx.name())
+            prefetch_ctx.list = GetImgUUIDList(result)
+
+        print('prefetching album images :{}'.format(prefetch_ctx.size()))
+        for i in range(prefetch_count):
+            index = prefetch_ctx.next()
+            img_uuid = prefetch_ctx.at(index)
+            if scale_pc not in imgCache:
+                imgCache[scale_pc] = imgcache.GlobalLRUCacheImg(100)
+            img_data = imgCache[scale_pc].lookup(user_name, img_uuid)
+            if not img_data:
+                print('prefetching image :{} index :{}'.format(img_uuid, index))
+                img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+                if img_data:
+                    imgCache[scale_pc].insert(user_name, img_uuid, img_data)
+            else:
+                print('image already prefetched :{}'.format(img_uuid))
+        prefetch_ctx.progress = False
+        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        print('prefetching album completed')
+
+
 class GetMyAlbum(Resource):
 
     def get(self):
         img_album = urllib.parse.unquote(request.args.get('img'))
+        prefetch_ctx = AlbumPrefetchContext(img_album, list())
+        session["current_album"] = jsonpickle.encode(prefetch_ctx)
         with open('api/templates/show_albums_tile.html', 'r') as fp:
             data = fp.read()
             data = data.replace("album_value", str(img_album))
@@ -350,11 +450,16 @@ class GetMyAlbum(Resource):
             return response
 
     def post(self):
+        user_name = session.get("user_id")
         img_album = request.data
-        result = GetAlbumPhotos(session.get("user_id"), img_album)
-        result = json.dumps(result)
+        result = GetAlbumPhotos(user_name, img_album)
+        prefetch_ctx = AlbumPrefetchContext(img_album, GetImgUUIDList(result))
+        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        threading.Thread(target=AutoLoadAlbum, args=(
+            imgCache, 30), daemon=True).start()
+        result_str = json.dumps(result)
         # print img_album, result
-        response = make_response(result)
+        response = make_response(result_str)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
@@ -470,6 +575,7 @@ class AuthorizeImportPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
+
 class ImportPhotos(Resource):
 
     def get(self):
@@ -486,12 +592,11 @@ class ImportPhotos(Resource):
     def post(self):
         refresh_token = request.data  # request.form.get("token")
         print('request.data :' + refresh_token.decode("utf-8"))
-        thread = threading.Thread(target=SyncPhotos, args=(session.get("user_id"), refresh_token.decode("utf-8")))
+        threading.Thread(target=SyncPhotos, args=(
+            session.get("user_id"), refresh_token.decode("utf-8")), daemon=True).start()
         #SyncPhotos(session.get("user_id"), refresh_token.decode("utf-8"))
-        thread.daemon = True
-        tasklist.append(thread)
-        thread.start()
         return make_response()
+
 
 class ImportPhotosStatus(Resource):
 
@@ -510,7 +615,8 @@ class ImportPhotosStatus(Resource):
                 yield "data:" + str(p) + "\n\n"
                 p = p + SyncPhotosStatus(user_id)
                 time.sleep(1)
-        return Response(generate(session.get("user_id")), mimetype= 'text/event-stream')
+        return Response(generate(session.get("user_id")), mimetype='text/event-stream')
+
 
 class PhotoLabel(Resource):
 
@@ -540,23 +646,27 @@ class PhotoNotLabel(Resource):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
-#405 (METHOD NOT ALLOWED)
+# 405 (METHOD NOT ALLOWED)
+
+
 class PhotoGrayScale(Resource):
 
     def get(self):
         return Response()
 
     def post(self):
-        print (request.data)
+        print(request.data)
         img_uuid = request.data.decode("utf-8")
-        print (img_uuid)
+        print(img_uuid)
         data = ProcessImageGrayScale(GetPath(img_uuid))
         response = make_response(data)
         response.headers.set('Content-Type', 'image/jpg')
         return response
 
+
 def page_not_found(e):
     return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
+
 
 app = Flask(__name__, template_folder='templates')
 #app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
@@ -637,3 +747,5 @@ db.create_all()
 db.session.commit()
 statistics = Statistics(app, db, Request)
 InitPhotosDb()
+# initialize local image cache
+imgCache = dict()

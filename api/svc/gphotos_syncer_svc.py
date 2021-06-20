@@ -405,6 +405,7 @@ class GPhotosClient_V1(GClientOAuth2):
         else:
             start = DateDict(2000, 12, 31)
 
+        self.total_items = 0
         while not done:
             body = {
                 "pageToken": page_token,
@@ -435,10 +436,10 @@ class GPhotosClient_V1(GClientOAuth2):
                       response.status_code)
                 print(response.content)
                 break
-        print("total items :{}".format(self.total_items))
+        print("total new photos to sync:{}".format(self.total_items))
 
     def get_status(self):
-        print ('items downloaded :{}/{}'.format(self.items, self.total_items))
+        print ('google photos sync progress:{}/{}'.format(self.items, self.total_items))
         if self.total_items > 0:
             return int((self.items * 100)/self.total_items)
         else:
