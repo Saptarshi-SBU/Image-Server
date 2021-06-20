@@ -82,6 +82,12 @@ class DateDict:
     def to_dict(self):
         return {"year": self.year, "month": self.month, "day": self.day}
 
+    def to_string(self):
+        return json.dumps(self.to_dict())
+
+GSyncDefaultEpochOrigin = DateDict(2000, 12, 31)
+GSyncDefaultEpochEnd = DateDict(3000, 12, 31)
+
 Base = declarative_base()
 
 class GPhoto(Base):
@@ -331,17 +337,19 @@ class GPhotosClient_V1(GClientOAuth2):
                       response.status_code)
                 break
 
+    def setup_sync_point(self):
+        start = GSyncDefaultEpochOrigin
+        end = GSyncDefaultEpochEnd
+        dt = DBGetMaxDate(self.user_id)
+        if dt:
+            start = DateDict(dt.timetuple().tm_year, dt.timetuple().tm_mon, dt.timetuple().tm_mday)
+        return start, end
+
     def download_photos_bydate(self):
+        start, end = self.setup_sync_point()
+        self.items = 0
         page_token = None
         done = False
-        self.items = 0
-        dt = DBGetMaxDate(self.user_id)
-        end = DateDict(3000, 12, 31)
-        if dt:
-            start = DateDict(dt.timetuple().tm_year, dt.timetuple().tm_mon, 1)
-        else:
-            start = DateDict(2000, 12, 31)
-
         while not done:
             body = {
                 "pageToken": page_token,
@@ -358,6 +366,8 @@ class GPhotosClient_V1(GClientOAuth2):
             response = self.oauth_client2.request('POST', data=body,
                                                   url='https://photoslibrary.googleapis.com/v1/mediaItems:search')
 
+            print ('last synced date :{} photos synced :{} remaining :{}'.
+                format(start.to_string(), self.items, self.total_items))
             if response.status_code == 200:
                 data_dict = json.loads(response.content)
                 # print response.content, 'count:', len(data["mediaItems"])
@@ -373,9 +383,9 @@ class GPhotosClient_V1(GClientOAuth2):
                                         file_name=ans["filename"],
                                         date_time=convert_to_datetime(creation_time))
                         try:
+                            print(entry)
                             dbSession.add(entry)
                             dbSession.commit()
-                            print(entry)
                             self.items += 1
                         except:
                             print("db insert error :{}".format(
@@ -395,17 +405,11 @@ class GPhotosClient_V1(GClientOAuth2):
                 break
 
     def count_photos_to_download(self):
+        start, end = self.setup_sync_point()
         page_token = None
         done = False
-        print("counting photos to download")
-        dt = DBGetMaxDate(self.user_id)
-        end = DateDict(3000, 12, 31)
-        if dt:
-            start = DateDict(dt.timetuple().tm_year, dt.timetuple().tm_mon, 1)
-        else:
-            start = DateDict(2000, 12, 31)
-
         self.total_items = 0
+        print ('last synced date :{}, counting new photos...'.format(start.to_string()))
         while not done:
             body = {
                 "pageToken": page_token,
@@ -424,9 +428,11 @@ class GPhotosClient_V1(GClientOAuth2):
             #print("response :" + str(response))
             if response.status_code == 200:
                 data_dict = json.loads(response.content)
-                #print(response.content, 'count:', len(data_dict["mediaItems"]))
-                # imp
-                self.total_items += len(data_dict["mediaItems"])
+                print(response.content, 'data_dict:', data_dict)
+                if data_dict and "mediaItems" in data_dict:
+                    self.total_items += len(data_dict["mediaItems"])
+                else:
+                    print("key mediaItems not present in data_dict response")
                 if "nextPageToken" in data_dict:
                     page_token = data_dict["nextPageToken"]
                 else:
@@ -439,8 +445,8 @@ class GPhotosClient_V1(GClientOAuth2):
         print("total new photos to sync:{}".format(self.total_items))
 
     def get_status(self):
-        print ('google photos sync progress:{}/{}'.format(self.items, self.total_items))
         if self.total_items > 0:
+            print ('google photos sync progress:{}/{}'.format(self.items, self.total_items))
             return int((self.items * 100)/self.total_items)
         else:
             return 0

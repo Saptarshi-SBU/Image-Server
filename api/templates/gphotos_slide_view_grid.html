@@ -64,16 +64,16 @@ function run_next1(v1, v2) {
 	newimg1.title = v1.value.name + "(" + v1.value.date + ")"
 	newimg1.style.display = "block";
 	newimg1.style.opacity = 1;
-	newimg1.style.minWidth = "75%";
-	newimg1.style.minHeight = "75%";
+	newimg1.style.minWidth = "80%";
+	newimg1.style.minHeight = "80%";
 	newimg2 = document.getElementById("img2")
 	newimg2.style.opacity = 0;
 	newimg2.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v2.value.uuid
 	newimg2.title = v2.value.name + "(" + v2.value.date + ")"
 	newimg2.style.display = "block";
 	newimg2.style.opacity = 1;
-	newimg2.style.minWidth = "75%";
-	newimg2.style.minHeight = "75%";
+	newimg2.style.minWidth = "80%";
+	newimg2.style.minHeight = "80%";
 }
 
 function run_next2(v) {
@@ -81,8 +81,8 @@ function run_next2(v) {
 	newimg3.style.opacity = 0;
         newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
 	newimg3.title = v.value.name + "(" + v.value.date + ")"
-	newimg3.style.minWidth = "75%";
-	newimg3.style.minHeight = "75%";
+	newimg3.style.minWidth = "100%";
+	newimg3.style.minHeight = "100%";
 	newimg3.style.display = "block";
 	newimg3.style.opacity = 1;
 }
