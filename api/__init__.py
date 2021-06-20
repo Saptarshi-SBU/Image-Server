@@ -23,7 +23,7 @@ from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
-from .image_processing.filtering import ProcessImage, ProcessImageGrayScale
+from .image_processing.filtering import ProcessImage, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -467,7 +467,8 @@ class GetMyAlbum(Resource):
 class AutoCompleteAlbumSearch(Resource):
 
     def post(self):
-        result = AutoCompleteAlbum(request.data)
+        user_name = session.get("user_id")
+        result = AutoCompleteAlbum(user_name, request.data)
         result = json.dumps(result)
         response = make_response(result)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -648,7 +649,6 @@ class PhotoNotLabel(Resource):
 
 # 405 (METHOD NOT ALLOWED)
 
-
 class PhotoGrayScale(Resource):
 
     def get(self):
@@ -659,6 +659,34 @@ class PhotoGrayScale(Resource):
         img_uuid = request.data.decode("utf-8")
         print(img_uuid)
         data = ProcessImageGrayScale(GetPath(img_uuid))
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
+class PhotoSharpenFilter(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print(request.data)
+        img_uuid = request.data.decode("utf-8")
+        print(img_uuid)
+        data = ProcessImageSharpenFilter(GetPath(img_uuid))
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
+class PhotoSepiaFilter(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print(request.data)
+        img_uuid = request.data.decode("utf-8")
+        print(img_uuid)
+        data = ProcessImageSepiaFilter(GetPath(img_uuid))
         response = make_response(data)
         response.headers.set('Content-Type', 'image/jpg')
         return response
@@ -684,9 +712,9 @@ class PhotoMemory(Resource):
                 data = data.replace("ca509b27-cd33-45ab-9d71-6e1e2df48b09", result[p]['value']['uuid'])
                 data = data.replace("album_value", result[p]['value']['tags'])
                 if found:
-                    data = data.replace("Day", "Day({})".format(result[p]['value']['date']))
+                    data = data.replace("Day", "Day ({})".format(result[p]['value']['date']))
                 else:
-                    data = data.replace("Day", "Month({})".format(result[p]['value']['date']))
+                    data = data.replace("Day", "Month ({})".format(result[p]['value']['date']))
                 response = make_response(data)
                 response.headers.add('Access-Control-Allow-Origin', '*')
                 return response
@@ -744,6 +772,8 @@ api.add_resource(PhotoLabel, '/label')
 api.add_resource(PhotoNotLabel, '/nolabel')
 api.add_resource(SetWallPhoto, '/wallphoto')
 api.add_resource(PhotoGrayScale, '/grayscale')
+api.add_resource(PhotoSharpenFilter, '/sharpenfilter')
+api.add_resource(PhotoSepiaFilter, '/sepiafilter')
 api.add_resource(PhotoMemory, '/memory')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)

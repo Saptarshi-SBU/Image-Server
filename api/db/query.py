@@ -342,8 +342,12 @@ def AutoCompleteAlbum(user_name, text):
 	tl = []
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		for value in _dbSession.query(PhotoModel.Tags).filter(PhotoModel.Username==user_name).distinct():
-			tl.append(value[0].lower())
+		#for value in _dbSession.query(PhotoModel.Tags).filter(PhotoModel.Username==user_name).distinct():
+		for value in _dbSession.query(PhotoModel.Tags).filter(PhotoModel.Username==user_name).distinct(PhotoModel.Tags):
+			#tl.append(value[0].lower())
+			print (value.Tags)
+			tl.append(value.Tags.lower())
+		#print (text, tl)
 	return AutoComplete(tl, text)
 
 def ScanPhotos():

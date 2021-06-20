@@ -33,9 +33,14 @@ class BKTree(object):
 
     def lookup_node(self, node, threshold, r1, r2, result):
         assert node is not None
-        child_nodes = { k : v for k, v in node.dist.iteritems() if k >= r1 and k <= r2 }
+        #for py3 dict.iteritems changed to dict.items
+        #print (node.dist.items())
+        child_nodes = { k : v for k, v in node.dist.items() if k >= r1 and k <= r2 }
+        if len(child_nodes) == 0:
+            print ('no valid candidate node in lookup for {}'.format(self.query))
         for k in child_nodes:
             dist = edit_distance(self.query, child_nodes[k].text, dp=True)
+            #print ('query :{} child :{} ed :{}'.format(self.query, child_nodes[k].text, dist))
             if dist <= threshold:
                 result.append(child_nodes[k].text)
             self.lookup_node(child_nodes[k], threshold, dist - threshold, dist + threshold, result)    
@@ -45,6 +50,7 @@ class BKTree(object):
         self.query = text
         dist = edit_distance(text, self.root.text, dp=True)
         self.lookup_node(self.root, threshold, dist - threshold, dist + threshold, match_list)
+        print ("text :{} match_list :{}".format(text, match_list))
         return match_list
 
 

@@ -38,7 +38,7 @@ def edit_distance_recur(text, i, N, pattern, j, M, op):
     #print 'i={}'.format(insert)
 
     edits = min(subst, delete, insert)
-    #print 's={} d={} t={} v={} i={} j={} op={}'.format(subst, delete, insert, edits, i, j, op)
+    #print ('s={} d={} t={} v={} i={} j={} op={}'.format(subst, delete, insert, edits, i, j, op))
     return edits
 
 def edit_distance_dp(text, pattern):

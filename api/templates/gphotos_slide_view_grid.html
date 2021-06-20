@@ -33,6 +33,7 @@ img {
 <body style="background-color:black;">
 
 <p id="demo"></p>
+<div class="marginauto_cap" style="color:blue;"> <figcaption id="icaption">Loading... </figcaption> </div>
 
 <div class="grid-container" id="gd1">
 	<div>
@@ -74,6 +75,8 @@ function run_next1(v1, v2) {
 	newimg2.style.opacity = 1;
 	newimg2.style.minWidth = "80%";
 	newimg2.style.minHeight = "80%";
+	newcap = document.getElementById("icaption")
+	newcap.style.display = "none";
 }
 
 function run_next2(v) {
@@ -85,6 +88,8 @@ function run_next2(v) {
 	newimg3.style.minHeight = "100%";
 	newimg3.style.display = "block";
 	newimg3.style.opacity = 1;
+	newcap = document.getElementById("icaption")
+	newcap.style.display = "none";
 }
 
 function set_slideshow() {
