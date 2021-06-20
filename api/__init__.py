@@ -7,6 +7,7 @@ import jsonpickle
 import time
 import gc
 #import objgraph
+import random
 import uuid
 import time
 import datetime
@@ -18,8 +19,8 @@ import threading
 from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
-from .db.DB import InitPhotosDb
-from .db.query import InsertPhoto, LookupPhotos, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+from .db.DB import DBGetPhoto, InitPhotosDb
+from .db.query import InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageGrayScale
@@ -34,6 +35,9 @@ pymysql.install_as_MySQLdb()
 
 # task entries
 tasklist = []
+
+#serialize prefetch
+prefetchMutex = threading.Lock()
 
 # configured via api.cfg
 HOST_ADDRESS = GetHostIP()
@@ -138,7 +142,7 @@ class GetPhotoRaw(Resource):
 
 class GetPhotoScaled(Resource):
 
-    # @cacheresponse
+    @cacheresponse
     def get(self):
         img_data = None
         user_name = session["user_id"]
@@ -162,7 +166,6 @@ class GetPhotoScaled(Resource):
                     imgCache[scale_pc].insert(user_name, img_uuid, img_data)
                     threading.Thread(target=AutoLoadAlbum, args=(
                         imgCache, 10), daemon=True).start()
-                    #AutoLoadAlbum(imgCache, 10)
             else:
                 print('image uuid {} present in cache'.format(img_uuid))
 
@@ -293,7 +296,6 @@ class ViewLikedPhotos(Resource):
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
 
-
 class ViewLabeledPhotosAuto(Resource):
 
     def get(self):
@@ -392,8 +394,6 @@ class AlbumPrefetchContext(object):
 
     def progress(self):
         return self.progress
-
-prefetchMutex = threading.Lock()
 
 def AutoLoadAlbum(imgCache, prefetch_count=10):
     with prefetchMutex:
@@ -663,6 +663,35 @@ class PhotoGrayScale(Resource):
         response.headers.set('Content-Type', 'image/jpg')
         return response
 
+class PhotoMemory(Resource):
+
+    def get(self):
+        found = False
+        user_name = session.get("user_id")
+        dt = datetime.datetime.today().timetuple()
+        result = LookupPhotosByDate(user_name, dt.tm_year-1, dt.tm_mon, dt.tm_mday)
+        if len(result) > 0:
+            found = True
+        else:
+            result = LookupPhotosByDate(user_name, dt.tm_year-1, dt.tm_mon)
+
+        if len(result) > 0:
+            with open('api/templates/memory.html', 'r') as fp:
+                random.seed(datetime.datetime.now())
+                p = random.randint(0, len(result) - 1)
+                data = fp.read()
+                data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+                data = data.replace("ca509b27-cd33-45ab-9d71-6e1e2df48b09", result[p]['value']['uuid'])
+                data = data.replace("album_value", result[p]['value']['tags'])
+                if found:
+                    data = data.replace("Day", "Day({})".format(result[p]['value']['date']))
+                else:
+                    data = data.replace("Day", "Month({})".format(result[p]['value']['date']))
+                response = make_response(data)
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                return response
+        else:
+            return make_response() #render_template('nomemory.html'))
 
 def page_not_found(e):
     return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
@@ -715,6 +744,7 @@ api.add_resource(PhotoLabel, '/label')
 api.add_resource(PhotoNotLabel, '/nolabel')
 api.add_resource(SetWallPhoto, '/wallphoto')
 api.add_resource(PhotoGrayScale, '/grayscale')
+api.add_resource(PhotoMemory, '/memory')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')

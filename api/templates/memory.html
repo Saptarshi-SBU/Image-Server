@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<style>
+
+p {
+    margin: 0;
+    padding: 0;
+}
+
+img { 
+    max-height: 100%;
+    min-height: 100%;
+}
+
+.marginauto {
+    margin: 10px auto 20px;
+}
+
+</style>
+</head>
+
+<body style="background-color:white;">
+<div class="w3-content", align="center">
+    <div align="center" style="font-size: 24px;" >
+        <br> On this Day last Year: album_value </br>
+    </div>
+    <!-- <font size=+1 color="blue"> High Resolution </font> -->
+    <img class="marginauto" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09&scale=50" alt="centered">
+</div>
+</body>
+
+<script>
+
+// holds json for all photos
+var json_template = '{ "value" : { "uuid" : "ca509b27-cd33-45ab-9d71-6e1e2df48b09", "tags" : " " } }'
+
+</script>
+</html>

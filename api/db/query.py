@@ -98,6 +98,19 @@ def LookupPhotos(user_name, like=False):
 			photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
 	return photoPaths
 
+def LookupPhotosByDate(user_name, year, month, day=None):
+	photoPaths = []
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		if day:
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(and_(PhotoModel.Year == year, PhotoModel.Month == month, PhotoModel.Day == day)).all()
+		else:
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(and_(PhotoModel.Year == year, PhotoModel.Month == month)).all()
+		for photo in result:
+			photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}'.format(photo.Day, photo.Month,
+			photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
+	return photoPaths
+
 def GetAlbumPhotos(user_name, album):
 	photoPaths = []
 	result = []
