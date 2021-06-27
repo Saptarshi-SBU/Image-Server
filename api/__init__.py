@@ -346,6 +346,7 @@ class SearchPhotos(Resource):
         result = FilterPhotos(session.get("user_id"),
                               request.form['from_year'], request.form['to_year'], request.form['album'])
         result = json.dumps(result)
+        #print (result)
         response = make_response(result)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
@@ -468,7 +469,10 @@ class AutoCompleteAlbumSearch(Resource):
 
     def post(self):
         user_name = session.get("user_id")
-        result = AutoCompleteAlbum(user_name, request.data)
+        if request.data is None:
+             return make_response("Invalid Search Request", 400)
+        text = request.data.decode("utf-8")
+        result = AutoCompleteAlbum(user_name, text)
         result = json.dumps(result)
         response = make_response(result)
         response.headers.add('Access-Control-Allow-Origin', '*')

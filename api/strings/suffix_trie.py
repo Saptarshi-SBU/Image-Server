@@ -73,14 +73,21 @@ class SuffixTrie(object):
                         stack.append(node.children[key])
         return docs
 
-    def show(self, node=None, string=''):
+    def show(self, result, node=None, string=''):
         if node is None:
             node = self.root
 
         if node.leaf:
-            print (string, node.doc_index)
+            #print (string, node.doc_index)
+            result.append(string)
             return
 
         #print node.children.keys()
         for i in node.children:
-            self.show(node.children[i], string + i)
+            self.show(result, node.children[i], string + i)
+
+def DumpSuffixTrie(suffix_trie):
+    result = []
+    suffix_trie.show(result)
+    for string in sorted(result):
+        print (string)

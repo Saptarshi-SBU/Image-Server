@@ -1,252 +1,288 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset=utf-8 />
-<style>
+    <meta charset=utf-8 />
+    <style>
+        p {
+            margin: 0;
+            padding: 0;
+        }
 
-p {
-    margin: 0;
-    padding: 0;
-}
+        img {
+            max-height: 100%;
+        }
 
-img { 
-    max-height: 100%; 
-}
+        .marginauto {
+            margin: 10px auto 20px;
+        }
 
-.marginauto {
-    margin: 10px auto 20px;
-}
-
-.marginauto_cap {
-    margin: 10px auto 20px;
-    text-align: center;
-    height: 12px; 
-    font-size: 12px;
-}
-
-</style>
+        .marginauto_cap {
+            margin: 10px auto 20px;
+            text-align: center;
+            height: 12px;
+            font-size: 12px;
+        }
+    </style>
 </head>
 
 <!-- https://www.w3schools.com/charsets/ref_utf_symbols.asp -->
 
-<div class="w3-content", align="center">
-  <!-- <font size=+1 color="blue"> High Resolution </font> -->
-  <img class="marginauto" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09&scale=50" alt="centered">
-<div class="marginauto_cap">
-  <button id="button1" onclick="run_like_unlike()" style="height:24px;width:32px;font-size:16px">&#9825;</button>
-  <button id="button2" onclick="run_delete()" style="height:24px;width:32px;font-size:16px">&#9746;</button>
-  <button id="button3" onclick="run_background()" style="height:24px;width:32px;font-size:16px">&#9734;</button>
-  <button id="button4" onclick="run_download()" style="height:24px;width:32px;font-size:16px">&#8595;</button>
-  <button id="button6" onclick="run_grayscale()" style="height:24px;width:32px;font-size:16px">&#x25BC;</button>
-  <button id="button7" onclick="run_sharpenfilter()" style="height:24px;width:32px;font-size:16px">&#x2600;</button>
-  <button id="button8" onclick="run_sepiafilter()" style="height:24px;width:32px;font-size:16px">&#x2603;</button>
-  <button id="button5" onclick="location.href='http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09'" style="height:24px;width:32px;font-size:16px">&#x1F50D;</button>
-</div>
+<div class="w3-content" , align="center">
+    <!-- <font size=+1 color="blue"> High Resolution </font> -->
+    <img class="marginauto" id="img"
+        src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09&scale=50"
+        alt="centered">
+    <div class="marginauto_cap">
+        <button id="button1" onclick="run_like_unlike()" style="height:24px;width:32px;font-size:16px">&#9825;</button>
+        <button id="button2" onclick="run_delete()" style="height:24px;width:32px;font-size:16px">&#9746;</button>
+        <button id="button3" onclick="run_background()" style="height:24px;width:32px;font-size:16px">&#9734;</button>
+        <button id="button4" onclick="run_download()" style="height:24px;width:32px;font-size:16px">&#8595;</button>
+        <button id="button6" onclick="run_grayscale()" style="height:24px;width:32px;font-size:16px">&#x25BC;</button>
+        <button id="button7" onclick="run_sharpenfilter()"
+            style="height:24px;width:32px;font-size:16px">&#x2600;</button>
+        <button id="button8" onclick="run_sepiafilter()" style="height:24px;width:32px;font-size:16px">&#x2603;</button>
+        <button id="button5"
+            onclick="location.href='http://$SERVER_HOST_IP:4040/api/v1/rawphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09'"
+            style="height:24px;width:32px;font-size:16px">&#x1F50D;</button>
+    </div>
 
-<div align="center">
-    <label class=marginauto_cap for="tag"> </label>
-    <input id='tag-input'  name='tag' type='text' style="height: 16px; width: 360px; font-size: 16px;"> </input>
-    <p><button onclick="run_edit()" style="font-size: 12px;"> Comments </button></p>
-</div>
+    <div align="center">
+        <label class=marginauto_cap for="tag"> </label>
+        <input id='tag-input' name='tag' type='text' style="height: 16px; width: 360px; font-size: 16px;"> </input>
+        <p><button onclick="run_edit()" style="font-size: 12px;"> Comments </button></p>
+    </div>
 </div>
 
 <script>
 
-// holds json for all photos
-var json_template = '{ "value" : { "uuid" : "ca509b27-cd33-45ab-9d71-6e1e2df48b09", "tags" : " " } }'
+    // holds json for all photos
+    var json_template = '{ "value" : { "uuid" : "ca509b27-cd33-45ab-9d71-6e1e2df48b09", "tags" : " " } }'
 
-function run_edit() {
-    newcap = document.getElementById("tag-input")
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            newcap = document.getElementById("tag-input")
-            newcap.value = ""
-            console.log("reset done")
-        } else {
-            console.log(this.status)
-        }
-    };
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/updatephoto", true);
-    obj = JSON.parse(json_template);
-    obj.value.tags = newcap.value
-    xmlhttp.send(JSON.stringify(obj));
-    console.log(newcap.value)
-}
+    var custom_blob = null
+    var custom_filter = null
 
-function run_like() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/likephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-}
-
-function run_unlike() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/unlikephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-}
-
-function run_like_unlike(elem) {
-    const whiteHeart = '&#9825;';
-    const blackHeart = '&#9829;';
-
-    elem = document.getElementById("button1")
-    const like = elem.textContent;
-    if (like == whiteHeart) {
-        //elem.textContent = blackHeart
-        run_like();
-    } else {
-        //elem.textContent = whiteHeart
-        run_unlike();
+    function run_edit() {
+        newcap = document.getElementById("tag-input")
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                newcap = document.getElementById("tag-input")
+                newcap.value = ""
+                console.log("reset done")
+            } else {
+                console.log(this.status)
+            }
+        };
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/updatephoto", true);
+        obj = JSON.parse(json_template);
+        obj.value.tags = newcap.value
+        xmlhttp.send(JSON.stringify(obj));
+        console.log(newcap.value)
     }
-}
 
-function run_delete() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            console.log(uuid + ' deleted')
-        }
-    };
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/deletephoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-    console.log(uuid + ' deleting')
-}
-
-function run_wall(elem) {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/wallphoto", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-    console.log(obj.value.uuid + ' set wall image')
-}
-
-function run_download() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            console.log("reply")
-        } else {
-            console.log(this.status)
-        }
-    };
-    xmlhttp.onload = function() {
-        if (this.status == 200) {
-	  // Create a new Blob object using the response data of the onload object
-          var blob = new Blob([this.response], {type: 'image/jpg'});
-          //Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
-          let a = document.createElement("a");
-          a.style = "display: none";
-          document.body.appendChild(a);
-          //Create a DOMString representing the blob and point the link element towards it
-          let url = window.URL.createObjectURL(blob);
-          a.href = url;
-          a.download = 'my_image.jpg';
-          //programatically click the link to trigger the download
-          a.click();
-          //release the reference to the file by revoking the Object URL
-          window.URL.revokeObjectURL(url)
-	    } else {
-	      console.log('\nerror downloading :' + this.status)
-	    }
+    function run_like() {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/likephoto", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
     }
-    obj = JSON.parse(json_template);
-    xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/downloadphoto?img=" + obj.value.uuid, true);
-    xmlhttp.responseType = 'blob';
-    xmlhttp.send(obj.value.uuid);
-    console.log('download :' + obj.value.uuid)
-}
 
-function run_grayscale(elem) {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            const byteCharacters = atob(this.response);
-            const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            // Create a new Blob object using the response data of the onload object
-            var blob = new Blob([byteArray], {type: 'image/jpg'});
-            url = window.URL.createObjectURL(blob)
-            newimg = document.getElementById("img")
-            newimg.setAttribute('src', url)
-            newimg.style.maxWidth = "100%"
-            img.onload = function() {
-                window.URL.revokeObjectURL(this.src);
-            }
-        } else {
-            console.log(this.status)
-        }
-    };
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/grayscale", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-    console.log(obj.value.uuid + ' set gray scale')
-}
+    function run_unlike() {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/unlikephoto", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+    }
 
-function run_sharpenfilter(elem) {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            const byteCharacters = atob(this.response);
-            const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            // Create a new Blob object using the response data of the onload object
-            var blob = new Blob([byteArray], {type: 'image/jpg'});
-            url = window.URL.createObjectURL(blob)
-            newimg = document.getElementById("img")
-            newimg.setAttribute('src', url)
-            newimg.style.maxWidth = "100%"
-            img.onload = function() {
-                window.URL.revokeObjectURL(this.src);
-            }
-        } else {
-            console.log(this.status)
-        }
-    };
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/sharpenfilter", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-    console.log(obj.value.uuid + ' set gray scale')
-}
+    function run_like_unlike(elem) {
+        const whiteHeart = '&#9825;';
+        const blackHeart = '&#9829;';
 
-function run_sepiafilter(elem) {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            const byteCharacters = atob(this.response);
-            const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            // Create a new Blob object using the response data of the onload object
-            var blob = new Blob([byteArray], {type: 'image/jpg'});
-            url = window.URL.createObjectURL(blob)
-            newimg = document.getElementById("img")
-            newimg.setAttribute('src', url)
-            newimg.style.maxWidth = "100%"
-            img.onload = function() {
-                window.URL.revokeObjectURL(this.src);
-            }
+        elem = document.getElementById("button1")
+        const like = elem.textContent;
+        if (like == whiteHeart) {
+            //elem.textContent = blackHeart
+            run_like();
         } else {
-            console.log(this.status)
+            //elem.textContent = whiteHeart
+            run_unlike();
         }
-    };
-    xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/sepiafilter", true);
-    obj = JSON.parse(json_template);
-    xmlhttp.send(obj.value.uuid);
-    console.log(obj.value.uuid + ' set gray scale')
-}
+    }
+
+    function run_delete() {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                console.log(uuid + ' deleted')
+            }
+        };
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/deletephoto", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+        console.log(uuid + ' deleting')
+    }
+
+    function run_wall(elem) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/wallphoto", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+        console.log(obj.value.uuid + ' set wall image')
+    }
+
+    function run_download() {
+        if (custom_blob == null) {
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                    console.log("reply")
+                } else {
+                    console.log(this.status)
+                }
+            };
+            xmlhttp.onload = function () {
+                if (this.status == 200) {
+                    // Create a new Blob object using the response data of the onload object
+                    var blob = new Blob([this.response], { type: 'image/jpg' });
+                    //Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
+                    let a = document.createElement("a");
+                    a.style = "display: none";
+                    document.body.appendChild(a);
+                    //Create a DOMString representing the blob and point the link element towards it
+                    let url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = obj.value.uuid + '.jpg';
+                    //programatically click the link to trigger the download
+                    a.click();
+                    //release the reference to the file by revoking the Object URL
+                    window.URL.revokeObjectURL(url)
+                } else {
+                    console.log('\nerror downloading :' + this.status)
+                }
+            }
+            obj = JSON.parse(json_template);
+            xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/downloadphoto?img=" + obj.value.uuid, true);
+            xmlhttp.responseType = 'blob';
+            xmlhttp.send(obj.value.uuid);
+            console.log('download :' + obj.value.uuid)
+        } else {
+            let a = document.createElement("a");
+            a.style = "display: none";
+            document.body.appendChild(a);
+            //Create a DOMString representing the blob and point the link element towards it
+            let url = window.URL.createObjectURL(custom_blob);
+            a.href = url;
+            obj = JSON.parse(json_template);
+            a.download = obj.value.uuid + '_' + custom_filter + '.jpg';
+            //programatically click the link to trigger the download
+            a.click();
+            //release the reference to the file by revoking the Object URL
+            window.URL.revokeObjectURL(url)
+            custom_blob = null
+        }
+    }
+
+    function run_grayscale(elem) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                const byteCharacters = atob(this.response);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                // Create a new Blob object using the response data of the onload object
+                var blob = new Blob([byteArray], { type: 'image/jpg' });
+                url = window.URL.createObjectURL(blob)
+                newimg = document.getElementById("img")
+                newimg.setAttribute('src', url)
+                newimg.style.maxWidth = "100%"
+                img.onload = function () {
+                    window.URL.revokeObjectURL(this.src);
+                }
+                custom_blob = blob
+                custom_filter = 'gray'
+            } else {
+                console.log(this.status)
+                custom_blob = null
+                custom_filter = null
+            }
+        };
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/grayscale", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+        console.log(obj.value.uuid + ' set gray scale')
+    }
+
+    function run_sharpenfilter(elem) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                const byteCharacters = atob(this.response);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                // Create a new Blob object using the response data of the onload object
+                var blob = new Blob([byteArray], { type: 'image/jpg' });
+                url = window.URL.createObjectURL(blob)
+                newimg = document.getElementById("img")
+                newimg.setAttribute('src', url)
+                newimg.style.maxWidth = "100%"
+                img.onload = function () {
+                    window.URL.revokeObjectURL(this.src);
+                }
+                custom_blob = blob
+                custom_filter = 'contrast'
+            } else {
+                console.log(this.status)
+                custom_blob = null
+                custom_filter = null
+            }
+        };
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/sharpenfilter", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+        console.log(obj.value.uuid + ' set gray scale')
+    }
+
+    function run_sepiafilter(elem) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                const byteCharacters = atob(this.response);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                // Create a new Blob object using the response data of the onload object
+                var blob = new Blob([byteArray], { type: 'image/jpg' });
+                url = window.URL.createObjectURL(blob)
+                newimg = document.getElementById("img")
+                newimg.setAttribute('src', url)
+                newimg.style.maxWidth = "100%"
+                img.onload = function () {
+                    window.URL.revokeObjectURL(this.src);
+                }
+                custom_blob = blob
+                custom_filter = "sepia"
+            } else {
+                console.log(this.status)
+                custom_blob = null
+                custom_filter = null
+            }
+        };
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/sepiafilter", true);
+        obj = JSON.parse(json_template);
+        xmlhttp.send(obj.value.uuid);
+        console.log(obj.value.uuid + ' set gray scale')
+    }
 
 
 </script>
+
 </html>

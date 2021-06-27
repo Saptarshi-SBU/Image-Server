@@ -1,5 +1,5 @@
 from string import ascii_lowercase
-from .suffix_trie import SuffixTrie
+from .suffix_trie import SuffixTrie, DumpSuffixTrie
 from .edit_distance import edit_distance
 from .bktree import CreateBkTree, ApproximateMatch
 
@@ -27,13 +27,14 @@ def AutoCorrect(tl, text, k=2):
 def AutoComplete(tl, text):
     result = []
     text = text.lower()
+    tl = [t.lower() for t in tl]
     suffix_trie = SuffixTrie()
     for t in tl:
         for i in reversed(range(len(t))):
             if t[i] in ascii_lowercase:
                 suffix_trie.add(t[i:] + '$', tl.index(t))
-
     ti = suffix_trie.match(text)
+    #DumpSuffixTrie(suffix_trie)
     if len(ti) == 0 and len(text.split()) == 1:
         nw = AutoCorrect(tl, text)
         for t in nw:
@@ -42,3 +43,9 @@ def AutoComplete(tl, text):
     else:
         result = [ tl[i] for i in ti ]
     return result
+
+if __name__ == "__main__":
+    tl = ["san jose, california, december, 2019"]
+    tl.append("san jose, california, december, 2020")
+    rs = AutoComplete(tl, "san")
+    print (rs)

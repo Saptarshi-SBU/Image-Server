@@ -173,13 +173,13 @@ label {
   });
   
   sendFile = function () {
+    /*
     var formData = new FormData();
+    formData.set('album', album.value);
     formData.set('from_year', from_year.value);
     formData.set('to_year',   to_year.value);
-    formData.set('album',     album.value);
 
-    var xmlhttp  = new XMLHttpRequest();
-    /*
+    var xmlhttp  = new XMLHttpRequest();    
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             var txt = ""
@@ -188,18 +188,20 @@ label {
             console.log('\nlog: ' + arr.length)
             for (var i in arr) {
                 //img_urls += "<div align=center> <font size=+2>" + "ID: " + arr[i].value.uuid + "</font> </div>"
-                img_urls += "<div align=center> <font size=+2> <a href=http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid + ">" + "ID : " + arr[i].value.uuid + "</a> </font> </div>"
+                img_urls += "<div align=center> <font size=+2> <a href=http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid + " target=_blank >" + "ID : " + arr[i].value.uuid + "</a> </font> </div>"
                 img_urls += "<div><img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" +
                     arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/></div>"
             }
             document.getElementById("demo").innerHTML = img_urls;
         }
     };
-    */
+    
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/search');
     //xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=' + formData);
     xmlhttp.send(formData);
     console.log('sending album ' + album.value)
+    */
+    location.replace('http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=' + album.value)
   };
 }
 </script>
