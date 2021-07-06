@@ -52,7 +52,7 @@ img {
             for (var i in arr) {
                 img_urls += "<div align=center>"
                 img_urls += "<font size=+1> <a href=http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid + " style='text-decoration:none'>" + "ID : " + arr[i].value.uuid + "</a> </font>"
-                img_urls += "<img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/>"
+                img_urls += "<img class=marginauto src=http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px; alt=centered image/>"
                 img_urls += "<p>"
                 like_fn    = 'run_like_unlike(this,' + '"' + arr[i].value.uuid + '") '
                 del_fn     = 'run_delete(this,' + '"' + arr[i].value.uuid + '") '

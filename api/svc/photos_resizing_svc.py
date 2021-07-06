@@ -1,6 +1,6 @@
 #
 # resizes images by downsampling
-# python -m api.scanners.img_resizing_daemon
+# python -m api.svc.photos_resizing_svc
 #
 import os
 import time
@@ -90,6 +90,7 @@ def ConvertPhotosMediumMultiThreaded(result, r_start, r_end, new_path):
 			if k % 100 == 0:
 	   			print ('completed :{}% thread:{}'.format((k * 100)/n, threading.currentThread().getName()))
 
+
 def ScannerDriver(num_threads):
 	new_path = GetMediumScaledImageDir()
 	if not os.path.exists(new_path):
@@ -103,7 +104,7 @@ def ScannerDriver(num_threads):
 			result = _dbSession.query(PhotoModel).all()
 			count = len(result) / num_threads
 			for i in range(num_threads):
-				t = threading.Thread(target = ConvertPhotosMediumT, args=(result, i*count, (i + 1)*count, new_path,))
+				t = threading.Thread(target = ConvertPhotosMediumMultiThreaded, args=(result, i*count, (i + 1)*count, new_path,))
 				threads.append(t)
 				t.start()
 			for t in threads:

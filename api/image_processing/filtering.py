@@ -1,6 +1,9 @@
+import io
 import cv2
 import numpy as np
 import base64
+from PIL import Image
+from flask import send_file
 
 def GetImageDimensions(filepath):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
@@ -10,6 +13,21 @@ def GetImageDimensions(filepath):
 	height = int(img_data.shape[0])
 	width  = int(img_data.shape[1])
 	return width, height
+
+def flat( *nums ):
+    'Build a tuple of ints from float or integer arguments. Useful because PIL crop and resize require integer points.'
+    return tuple( int(round(n)) for n in nums )
+
+def GetCroppedImage(orig_image, target_width, target_height):
+	#only crops height
+    width = orig_image.size[0]
+    height = orig_image.size[1]
+    if height > target_height:
+        top_cut_line = (height - target_height) / 2
+        image = orig_image.crop(flat(0, top_cut_line, width, height - top_cut_line))
+        return image
+    else:
+        return orig_image
 
 def ProcessImageDeprecated(filepath, scale_percent=15):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
@@ -36,6 +54,25 @@ def ProcessImage(filepath, scale_percent=15):
 	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
 	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
 	return img_encoded.tostring()
+ 
+def ProcessImageThumbnail(filepath, http=True):
+	image = Image.open(filepath)
+	(w, h) = image.size
+	if w >= h:
+		image.thumbnail((800, 800))
+	else:
+		aspect = w / h
+		new_h = 800 / aspect
+		image.thumbnail((800, new_h))
+	image = GetCroppedImage(image, 800, 532)
+	roi = io.BytesIO()
+	image.save(roi, format='JPEG')
+	roi.seek(0)
+	#print (image.size)
+	if http:
+		return send_file(roi, mimetype='image/jpg')
+	else:
+		return roi.getvalue()
 
 def ProcessImageGrayScale(filepath):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)

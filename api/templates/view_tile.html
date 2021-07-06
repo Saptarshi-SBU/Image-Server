@@ -52,21 +52,21 @@ img {
 <p id="demo"></p>
 
 <div class="row">
-    <div class="column"><h2><img id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label1"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label2"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label3"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label1"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label2"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label3"> <font size=32px>Text</font></label></p> </div>
 </div> 
 
 <div class="row">
-    <div class="column"><h2><img id="img4" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label4"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img5" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label5"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img6" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label6"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img4" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label4"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img5" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label5"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img6" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label6"> <font size=32px>Text</font></label></p> </div>
 </div>
 
 <div class="row">
-    <div class="column"><h2><img id="img7" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label7"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img8" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label8"> <font size=32px>Text</font></label></p> </div>
-    <div class="column"><h2><img id="img9" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label9"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img7" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label7"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img8" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label8"> <font size=32px>Text</font></label></p> </div>
+    <div class="column"><h2><img id="img9" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></h2><p align="center"> <label id="label9"> <font size=32px>Text</font></label></p> </div>
 </div>
 <input id="action" class=marginauto2 type="button" value="more" onclick="run_next()" style="height: 32px;
      width:96px;font-size: 16px;"></input>
@@ -86,7 +86,7 @@ function run_next() {
         if (i < arr.length) {
             console.log("img"+ k)
             newimg = document.getElementById("img" + k)
-            newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid
+            newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=" + arr[i].value.uuid
             //newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + arr[i].value.uuid + " style=width:800px;height:600px";
             newimg.style.display = "table";
             text = arr[i].value.tags

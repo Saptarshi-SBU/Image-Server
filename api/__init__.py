@@ -12,6 +12,7 @@ import uuid
 import time
 import datetime
 import urllib
+import collections
 import traceback
 import flask
 import functools
@@ -21,9 +22,9 @@ from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, DBGetUserImage, DBSetUserImage
-from .image_processing.filtering import ProcessImage, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetAlbumViewItems, DBGetPhotoLabel, DBAddPhotoLabel, \
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetThumbnailImage, DBGetUserImage, DBSetUserImage
+from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -35,6 +36,9 @@ pymysql.install_as_MySQLdb()
 
 # task entries
 tasklist = []
+
+#user tracking
+u_session = collections.defaultdict(collections.defaultdict)
 
 #serialize prefetch
 prefetchMutex = threading.Lock()
@@ -130,7 +134,7 @@ class FaviconApple(Resource):
 
 class GetPhotoRaw(Resource):
 
-    # @nocacheresponse
+    #@nocacheresponse
     def get(self):
         img_uuid = request.args.get('img')
         if img_uuid is None:
@@ -145,38 +149,57 @@ class GetPhotoScaled(Resource):
     @cacheresponse
     def get(self):
         img_data = None
+        img_uuid = request.args.get('img')
+        if img_uuid is None:
+            return make_response("Invalid image request", 400)
+        scale_pc = request.args.get('scale')
+        if scale_pc is None:
+            scale_pc = 15
+        # checked if image with medium size is processed
+        img_data = GetScaledImage(img_uuid)
+        if not img_data:
+            img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+
+        if img_data:
+            response = make_response(img_data)
+            response.headers.set('Content-Type', 'image/jpg')
+            return response
+        else:
+            return make_response("image not found {}".format(img_uuid), 404)
+
+class GetPhotoThumbnail(Resource):
+
+    @cacheresponse
+    def get(self):
+        img_data = None
         user_name = session["user_id"]
         img_uuid = request.args.get('img')
         if img_uuid is None:
             return make_response("Invalid image request", 400)
-        else:
-            scale_pc = request.args.get('scale')
-            if scale_pc is None:
-                scale_pc = 15
-            if scale_pc not in imgCache:
-                imgCache[scale_pc] = imgcache.GlobalLRUCacheImg(100)
-            img_data = imgCache[scale_pc].lookup(user_name, img_uuid)
+        img_data = imgCache[0].lookup(user_name, img_uuid)
+        if not img_data:
+            print('image uuid {} not present in cache'.format(img_uuid))
+            #checked if image with thumbail size is processed
+            img_data = GetThumbnailImage(img_uuid)
             if not img_data:
-                print('image uuid {} not present in cache'.format(img_uuid))
-                # checked if image with medium size is processed
-                img_data = GetScaledImage(img_uuid)
-                if not img_data:
-                    img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
-                if img_data:
-                    imgCache[scale_pc].insert(user_name, img_uuid, img_data)
-                    threading.Thread(target=AutoLoadAlbum, args=(
-                        imgCache, 10), daemon=True).start()
-            else:
-                print('image uuid {} present in cache'.format(img_uuid))
-
+                img_data = ProcessImageThumbnail(GetPath(img_uuid))
             if img_data:
-                response = make_response(img_data)
-                response.headers.set('Content-Type', 'image/jpg')
-                imgCache[scale_pc].stats()
-                return response
-            else:
-                return make_response("image not found {}".format(img_uuid), 404)
+                imgCache[0].insert(user_name, img_uuid, img_data)
+                if user_name in u_session:
+                    prefetch_ctx = u_session[user_name].get("current_album")
+                    if prefetch_ctx:
+                        threading.Thread(target=AutoLoadAlbum, args=(
+                            imgCache, user_name, prefetch_ctx, 10), daemon=True).start()
+        else:
+            print('image uuid {} present in cache'.format(img_uuid))
 
+        if img_data:
+            response = make_response(img_data)
+            response.headers.set('Content-Type', 'image/jpg')
+            imgCache[0].stats()
+            return response
+        else:
+            return make_response("image not found {}".format(img_uuid), 404)
 
 class ListPhotos(Resource):
 
@@ -356,7 +379,7 @@ class GetMyAlbums(Resource):
 
     @checklogin
     def post(self):
-        result = FilterPhotoAlbums(session.get("user_id"))
+        result = GetAlbumViewItems(session.get("user_id"))
         result = json.dumps(result)
         # print result
         response = make_response(result)
@@ -396,12 +419,12 @@ class AlbumPrefetchContext(object):
     def progress(self):
         return self.progress
 
-def AutoLoadAlbum(imgCache, prefetch_count=10):
+def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
     with prefetchMutex:
         print('Autoloading Album...')
-        scale_pc = 15
-        user_name = session.get("user_id")
-        prefetch_ctx = session.get("current_album")
+        if not user_name:
+            print ('session user name not set')
+            return
         if not prefetch_ctx:
             print("album prefetch context not set in session cookie")
             return
@@ -410,7 +433,7 @@ def AutoLoadAlbum(imgCache, prefetch_count=10):
             print("album prefetch already in progress")
             return
         prefetch_ctx.progress = True
-        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
         # in case album url remains cached client side
         if prefetch_ctx.size() == 0:
             prefetch_ctx.index = 0
@@ -421,27 +444,25 @@ def AutoLoadAlbum(imgCache, prefetch_count=10):
         for i in range(prefetch_count):
             index = prefetch_ctx.next()
             img_uuid = prefetch_ctx.at(index)
-            if scale_pc not in imgCache:
-                imgCache[scale_pc] = imgcache.GlobalLRUCacheImg(100)
-            img_data = imgCache[scale_pc].lookup(user_name, img_uuid)
+            img_data = imgCache[0].lookup(user_name, img_uuid)
             if not img_data:
                 print('prefetching image :{} index :{}'.format(img_uuid, index))
-                img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+                img_data = ProcessImageThumbnail(GetPath(img_uuid), http=False)
                 if img_data:
-                    imgCache[scale_pc].insert(user_name, img_uuid, img_data)
+                    imgCache[0].insert(user_name, img_uuid, img_data)
             else:
                 print('image already prefetched :{}'.format(img_uuid))
         prefetch_ctx.progress = False
-        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
         print('prefetching album completed')
-
 
 class GetMyAlbum(Resource):
 
     def get(self):
         img_album = urllib.parse.unquote(request.args.get('img'))
         prefetch_ctx = AlbumPrefetchContext(img_album, list())
-        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        user_name = session.get("user_id")
+        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
         with open('api/templates/show_albums_tile.html', 'r') as fp:
             data = fp.read()
             data = data.replace("album_value", str(img_album))
@@ -455,9 +476,10 @@ class GetMyAlbum(Resource):
         img_album = request.data
         result = GetAlbumPhotos(user_name, img_album)
         prefetch_ctx = AlbumPrefetchContext(img_album, GetImgUUIDList(result))
-        session["current_album"] = jsonpickle.encode(prefetch_ctx)
+        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
+        prefetch_ctx = u_session[user_name].get("current_album")
         threading.Thread(target=AutoLoadAlbum, args=(
-            imgCache, 30), daemon=True).start()
+            imgCache, user_name, prefetch_ctx, 30), daemon=True).start()
         result_str = json.dumps(result)
         # print img_album, result
         response = make_response(result_str)
@@ -534,6 +556,7 @@ class Login(Resource):
     def post(self):
         if LookupUser(request.form.get('email'), request.form.get('password')):
             session["user_id"] = request.form.get('email')
+            u_session[session["user_id"]] = dict()
             res = make_response(flask.redirect(url_for('api.home')))
             #res.set_cookie('user_id', str(uuid.uuid4()), max_age=60*60*24*365*2)
             #print (session["user_id"])
@@ -545,9 +568,11 @@ class Login(Resource):
 class LogOut(Resource):
 
     def get(self):
-        session.pop("user_id", None)
+        user_name = session.get("user_id")
+        if user_name in u_session:
+            del u_session[user_name]
+        session.pop(user_name, None)
         return make_response(render_template('login.html'))
-
 
 class SetWallPhoto(Resource):
 
@@ -754,6 +779,7 @@ api.add_resource(RemovePhoto, '/deletephoto')
 api.add_resource(WelcomeBanner, '/welcome')
 api.add_resource(GetPhotoRaw, '/rawphoto')
 api.add_resource(GetPhotoScaled, '/scaledphoto')
+api.add_resource(GetPhotoThumbnail, '/thumbnailphoto')
 api.add_resource(ListPhotos, '/listphotos')
 api.add_resource(ListLikePhotos, '/listlikephotos')
 api.add_resource(ListGPhotos, '/listgphotos')
@@ -813,3 +839,4 @@ statistics = Statistics(app, db, Request)
 InitPhotosDb()
 # initialize local image cache
 imgCache = dict()
+imgCache[0] = imgcache.GlobalLRUCacheImg(100)

@@ -7,6 +7,7 @@ import exifread
 import configparser
 from sqlalchemy import func
 from sqlalchemy import and_
+import sqlalchemy
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
 from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel
@@ -28,6 +29,11 @@ def GetMediumScaledImageDir(cfg_file=CONFIG_FILE):
 	config = configparser.ConfigParser()
 	config.read(cfg_file)
 	return config.get("m_dir", "path")
+
+def GetThumbnailImageDir(cfg_file=CONFIG_FILE):
+	config = configparser.ConfigParser()
+	config.read(cfg_file)
+	return config.get("s_dir", "path")
 
 def GetDateTime2(imagePath):
 	fp = open(imagePath, 'rb')
@@ -227,45 +233,92 @@ def FilterLabeledPhotosPotraitStyle(user_name, object_name, standard_sizes, skip
 		#print (photo)
 	return photos
 
+def GetAlbumViewItems(user_name):
+	photoPaths = {}
+	photoList = []
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel)\
+				.join(PhotoSizeModel, PhotoModel.UUID==PhotoSizeModel.UUID)\
+				.filter(PhotoModel.Username==user_name)\
+				.filter(PhotoSizeModel.Width>PhotoSizeModel.Height)\
+				.filter(PhotoSizeModel.Width <= 6016)\
+				.order_by(PhotoSizeModel.Width.desc()).all()
+
+	for photo in result:
+		if photo.Tags not in photoPaths:
+			photoPaths[photo.Tags] =\
+				{ \
+					"value" : \
+						{	"uuid"  : photo.UUID, \
+							"daytime" : photo.DayTime, \
+							"day"   : photo.Day, \
+							"month" : photo.Month, \
+							"year"  : photo.Year, \
+							"name"  : photo.Name, \
+							"tags"  : photo.Tags, \
+							"count" : int(1) \
+						} \
+				}
+		else:
+			photoPaths[photo.Tags]["value"]["count"] += 1
+
+	for photo in photoPaths:
+		photoList.append(photoPaths[photo])
+	photoList.sort(key=SortbyDate, reverse=True)
+	return photoList
+
 def FilterPhotoAlbums(user_name):
+	#deprecated
 	photoPaths = {}
 	photoList = []
 	result = []
+	'''
+	select sub.Tags, max(sub.width)
+		from (select p.Tags, p.UUID, s.width, s.height from PhotoTable p inner join
+		PhotoSizeTable s on p.UUID = s.UUID where p.username = "saptarshi.mrg@gmail.com"
+		and s.width > s.height order by p.Tags) sub group by sub.Tags;
+	'''
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).order_by(
-						PhotoModel.Year.desc()
-						).order_by(
-						PhotoModel.Month.desc()
-						).order_by(
-						PhotoModel.Day.desc()
-						).order_by(
-						PhotoModel.DayTime
-						).all()
+		subq = _dbSession.query(PhotoModel.Tags, sqlalchemy.func.max(PhotoSizeModel.Width).label('max_width'))\
+				.join(PhotoSizeModel, PhotoModel.UUID==PhotoSizeModel.UUID)\
+				.filter(PhotoModel.Username==user_name)\
+				.filter(PhotoSizeModel.Width>PhotoSizeModel.Height)\
+				.group_by(PhotoModel.Tags).subquery()
+		#https://stackoverflow.com/questions/30311354/sqlalchemy-joining-with-subquery-issue
+		result = _dbSession.query(PhotoModel)\
+				.join(PhotoSizeModel, PhotoModel.UUID==PhotoSizeModel.UUID)\
+				.filter(PhotoModel.Username==user_name)\
+				.join(subq, PhotoModel.Tags == subq.c.Tags)\
+				.filter(PhotoSizeModel.Width== subq.c.max_width).all()
 
 	#random.shuffle(result)
 
 	#unique albums
 	for photo in result:
 		# show only high resolution photos
-		if photo.Name.find("DSC") != -1:
-			photoPaths[photo.Tags] = { \
-										"value" : \
-											{ "uuid"  : photo.UUID, \
-											  "daytime" : photo.DayTime, \
-											  "day"   : photo.Day, \
-											  "month" : photo.Month, \
-											  "year"  : photo.Year, \
-											  "name"  : photo.Name, \
-											  "tags"  : photo.Tags, \
-											  "count" : int(0) \
-											} \
-									 }
+		if photo.Tags not in photoPaths:
+			photoPaths[photo.Tags] =\
+				{ \
+					"value" : \
+						{	"uuid"  : photo.UUID, \
+							"daytime" : photo.DayTime, \
+							"day"   : photo.Day, \
+							"month" : photo.Month, \
+							"year"  : photo.Year, \
+							"name"  : photo.Name, \
+							"tags"  : photo.Tags, \
+							"count" : int(0) \
+						} \
+				}
 
 	with DBManager() as db:
 		_dbSession = db.getSession()
 		for key in photoPaths:
-			photoPaths[key]["value"]["count"] = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == key).count()
+			photoPaths[key]["value"]["count"] = \
+				 _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name)\
+				 .filter(PhotoModel.Tags == key).count()
 			photoList.append(photoPaths[key])
 
 	photoList.sort(key=SortbyDate, reverse=True)
@@ -273,7 +326,7 @@ def FilterPhotoAlbums(user_name):
 
 def TestDuplicate(user_name, sourceBlob, digest):
 	with DBManager() as db:
-		_dbSession = db.getSession()
+		_dbSession = db.getSession()	
 		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter((PhotoModel.Digest == digest)).all()
 		for photo in result:
 			imgPath = '{}/{}.JPG'.format(photo.NameSpace, photo.UUID)
@@ -351,8 +404,6 @@ def AutoCompleteAlbum(user_name, text):
 	return AutoComplete(tl, text)
 
 def ScanPhotos():
-	photoPaths = {}
-	photoList = []
 	result = []
 	with DBManager() as db:
 		_dbSession = db.getSession()
@@ -377,6 +428,22 @@ def GetScaledImage(img_uuid):
 				imgPath = '{}{}_m.JPG'.format("/mnt/target/photos_small/", r.UUID)
 				with open(imgPath, 'rb') as f:
 					img_data = f.read()
+	return img_data
+
+
+def GetThumbnailImage(img_uuid):
+	img_data = None
+	'''
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
+		for r in result:
+			if len(r.NameSpace_Medium) > 1:
+				#imgPath = '{}{}_m.JPG'.format(result.NameSpace_Medium, result.UUID)
+				imgPath = '{}{}_m.JPG'.format("/mnt/target/photos_thumbnail/", r.UUID)
+				with open(imgPath, 'rb') as f:
+					img_data = f.read()
+	'''
 	return img_data
 
 def DBGetPhotoLabel(imgUUID):
