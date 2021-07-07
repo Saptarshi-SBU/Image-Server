@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any
 from requests_oauthlib import OAuth2Session
 import sqlalchemy as sa
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, exc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from ..db import dbconf
@@ -349,8 +349,7 @@ class GPhotosClient_V1(GClientOAuth2):
         start, end = self.setup_sync_point()
         self.items = 0
         page_token = None
-        done = False
-        while not done:
+        while self.items < self.total_items:
             body = {
                 "pageToken": page_token,
                 "filters": {
@@ -366,7 +365,7 @@ class GPhotosClient_V1(GClientOAuth2):
             response = self.oauth_client2.request('POST', data=body,
                                                   url='https://photoslibrary.googleapis.com/v1/mediaItems:search')
 
-            print ('last synced date :{} photos synced :{} remaining :{}'.
+            print ('last synced date :{} photos synced :{} total_items :{}'.
                 format(start.to_string(), self.items, self.total_items))
             if response.status_code == 200:
                 data_dict = json.loads(response.content)
@@ -387,6 +386,10 @@ class GPhotosClient_V1(GClientOAuth2):
                             dbSession.add(entry)
                             dbSession.commit()
                             self.items += 1
+                        except exc.IntegrityError:
+                            print("db insert error :{} item already inserted".format(
+                                sys.exc_info()[0]))
+                            self.items += 1
                         except:
                             print("db insert error :{}".format(
                                 sys.exc_info()[0]))
@@ -394,7 +397,6 @@ class GPhotosClient_V1(GClientOAuth2):
                 if "nextPageToken" in data_dict:
                     page_token = data_dict["nextPageToken"]
                 else:
-                    done = True
                     # database may have duplicates
                     self.items = self.total_items
                     print('finished listing all media items')

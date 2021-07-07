@@ -17,6 +17,7 @@ import traceback
 import flask
 import functools
 import threading
+from tqdm import tqdm
 from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
@@ -640,10 +641,14 @@ class ImportPhotosStatus(Resource):
         #msg.body = "An import task has been launched"
         # app_mail.send(msg)
         def generate(user_id):
-            p = 0
-            while p <= 100:
-                yield "data:" + str(p) + "\n\n"
-                p = p + SyncPhotosStatus(user_id)
+            curr = 0
+            prev = 0
+            pbar = tqdm(total=100)
+            while curr <= 100:
+                yield "data:" + str(curr) + "\n\n"
+                curr = SyncPhotosStatus(user_id)
+                pbar.update(curr - prev)
+                prev = curr
                 time.sleep(1)
         return Response(generate(session.get("user_id")), mimetype='text/event-stream')
 
