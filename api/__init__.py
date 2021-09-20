@@ -174,9 +174,13 @@ class GetPhotoThumbnail(Resource):
     def get(self):
         img_data = None
         user_name = session["user_id"]
+
         img_uuid = request.args.get('img')
         if img_uuid is None:
             return make_response("Invalid image request", 400)
+        #special case.(hard-coded in html template)
+        if img_uuid == '1ca509b27-cd33-45ab-9d71-6e1e2df48b09':
+            return None
         img_data = imgCache[0].lookup(user_name, img_uuid)
         if not img_data:
             print('image uuid {} not present in cache'.format(img_uuid))
@@ -184,6 +188,7 @@ class GetPhotoThumbnail(Resource):
             img_data = GetThumbnailImage(img_uuid)
             if not img_data:
                 img_data = ProcessImageThumbnail(GetPath(img_uuid))
+            #cache image
             if img_data:
                 imgCache[0].insert(user_name, img_uuid, img_data)
                 if user_name in u_session:
@@ -331,6 +336,19 @@ class ViewLabeledPhotosAuto(Resource):
             return response
 
 
+class ViewAlbumPhotosAuto(Resource):
+
+    def get(self):
+        img_album = urllib.parse.unquote(request.args.get('album'))
+        print('image album :{}'.format(img_album))
+        with open('api/templates/album_slide_view.html', 'r') as fp:
+            data = fp.read()
+            data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+            data = data.replace("album_value", str(img_album))
+            response = make_response(data)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
 class UploadPhotos(Resource):
 
     def get(self):
@@ -404,9 +422,12 @@ class AlbumPrefetchContext(object):
         self.progress = False
 
     def next(self):
-        pos = self.index
-        self.index = (self.index + 1) % len(self.list)
-        return pos
+        if len(self.list) > 0:
+            pos = self.index
+            self.index = (self.index + 1) % len(self.list)
+            return pos
+        else:
+            return None
 
     def size(self):
         return len(self.list)
@@ -430,7 +451,7 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
             print("album prefetch context not set in session cookie")
             return
         prefetch_ctx = jsonpickle.decode(prefetch_ctx)
-        if prefetch_ctx is True:
+        if prefetch_ctx.progress is True:
             print("album prefetch already in progress")
             return
         prefetch_ctx.progress = True
@@ -442,8 +463,12 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
             prefetch_ctx.list = GetImgUUIDList(result)
 
         print('prefetching album images :{}'.format(prefetch_ctx.size()))
+        print(prefetch_ctx.name())
         for i in range(prefetch_count):
             index = prefetch_ctx.next()
+            if index is None:
+                print ("No image entries present for prefetching")
+                return
             img_uuid = prefetch_ctx.at(index)
             img_data = imgCache[0].lookup(user_name, img_uuid)
             if not img_data:
@@ -792,6 +817,7 @@ api.add_resource(ListObjectPhotos, '/listlabeledphotos')
 api.add_resource(SearchPhotos, '/search')
 api.add_resource(GetMyAlbums, '/myalbums')
 api.add_resource(GetMyAlbum, '/myalbum')
+api.add_resource(ViewAlbumPhotosAuto, '/viewalbum')
 api.add_resource(AutoCompleteAlbumSearch, '/autocomplete')
 api.add_resource(LikePhoto, '/likephoto')
 api.add_resource(UnlikePhoto, '/unlikephoto')

@@ -41,9 +41,12 @@ def ScanAddPhotosDimensionII():
 				(PhotoModel.UUID==photo).first()
 			imgPath = '{}/{}.JPG'.format(result2.NameSpace, result2.UUID)
 			w, h = GetImageDimensions(imgPath)
-			assert w, "invalid image dimensions:{}".format(imgPath)
-			DBAddPhotoDimensions(result2.UUID, w, h)
-			print ('{} saving dimensions :{} weight :{} height :{}'.format(count, photo, w, h))
+			if w is None:
+				#assert w, "invalid image dimensions:{}".format(imgPath)
+				print("invalid image dimensions:{}".format(imgPath))
+			else:
+				DBAddPhotoDimensions(result2.UUID, w, h)
+				print ('{} saving dimensions :{} weight :{} height :{}'.format(count, photo, w, h))
 		print (count, photo, w, h)
 
 if __name__ == "__main__" :

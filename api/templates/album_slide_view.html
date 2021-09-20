@@ -3,20 +3,19 @@
 <head>
 <style>
 
+
 img { 
-    width: 100%; 
-    height: 100%; 
+    max-height: 100%;
+    width: auto;
+    display: None
 }
 
 .marginauto {
     margin: 10px auto 20px;
-    display: none;
 }
 
 .marginauto_cap {
-    margin: 10px auto 20px;
     text-align: center;
-    height: 32px; 
     font-size: 24px;
 }
 
@@ -25,9 +24,9 @@ img {
 
 <p id="demo"></p>
 
-<div>
-    <img class="marginauto" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
-    <div class="marginauto_cap"> <figcaption id="icaption">Image Description </figcaption> </div>
+<div align="center">
+    <img class="margin" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+    <div class="marginauto_cap" style="color:blue;"> <figcaption id="icaption">Loading... </figcaption> </div>
 </div>
 
 <script>
@@ -44,11 +43,13 @@ function run_next() {
     newimg.title = arr[i].value.name + "(" + arr[i].value.date + ")"
     newimg.style.display = "block";
     newimg.style.opacity = 1;
+    newimg.style.minWidth = "100%";
+    newimg.style.minHeight = "100%";
     newcap = document.getElementById("icaption")
     newcap.innerHTML = arr[i].value.tags + " " + "(" + i.toString() + "/" + total.toString() + ")"
     newcap.style.display = "block";
     i = (i + 1) % arr.length;
-    setTimeout(run_next, 10000);
+    setTimeout(run_next, 10000); // 10 seconds
 }
 
 xmlhttp = new XMLHttpRequest();
@@ -61,8 +62,8 @@ xmlhttp.onreadystatechange = function() {
         console.log(this.status)
     }
 };
-xmlhttp.open("GET", "http://$SERVER_HOST_IP:4040/api/v1/listlikephotos", true);
-xmlhttp.send();
+xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
+xmlhttp.send("album_value");
 
 </script>
 

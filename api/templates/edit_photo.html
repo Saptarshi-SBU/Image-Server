@@ -96,16 +96,17 @@
     }
 
     function run_like_unlike(elem) {
-        const whiteHeart = '&#9825;';
-        const blackHeart = '&#9829;';
+        const whiteHeart = "\u2661"; //'&#9825';
+        const blackHeart = "\u2665"; //'&#9829';
 
         elem = document.getElementById("button1")
+        console.log(elem.textContent)
         const like = elem.textContent;
         if (like == whiteHeart) {
-            //elem.textContent = blackHeart
+            elem.textContent = blackHeart
             run_like();
         } else {
-            //elem.textContent = whiteHeart
+            elem.textContent = whiteHeart
             run_unlike();
         }
     }

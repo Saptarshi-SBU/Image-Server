@@ -60,8 +60,10 @@ span:last-child
 
 <div class="header">
 	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value="<<" onclick="run_backward()"></input></span>
-	<span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/">album_value </a></span>
-	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value=">>" onclick="run_forward()" ></input></span>
+    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">[Home] </a></span>
+    <span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/view">album_value </a></span>
+    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">[slideshow] </a></span>
+    <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value=">>" onclick="run_forward()" ></input></span>
 </div>
 
 <div class="row">
@@ -108,8 +110,8 @@ function show_images() {
             console.log("img"+ k)
             newimg = document.getElementById("img" + k)
             newimg.src = "http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=" + arr[i].value.uuid
-	    newref = document.getElementById("a"+k)
-	    newref.href = "http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid
+            newref = document.getElementById("a"+k)
+            newref.href = "http://$SERVER_HOST_IP:4040/api/v1/edit?img=" + arr[i].value.uuid
             newimg.style.display = "table";
             console.log(i + ': ' + arr[i].value.uuid + ' : ' + arr[i].value.like)
         } else {
@@ -129,7 +131,7 @@ function show_album() {
             arr = JSON.parse(xmlhttp.responseText)
             console.log('\nlog: ' + arr.length)
             console.log('\nlog: ' + arr)
-	    show_images()
+            show_images()
         }
     };
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
