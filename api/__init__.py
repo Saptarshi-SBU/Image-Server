@@ -173,31 +173,34 @@ class GetPhotoThumbnail(Resource):
     @cacheresponse
     def get(self):
         img_data = None
-        user_name = session["user_id"]
+        user_name = session.get("user_id")
+        if user_name is None:
+            return make_response("invalid user id", 400)
 
         img_uuid = request.args.get('img')
         if img_uuid is None:
-            return make_response("Invalid image request", 400)
-        #special case.(hard-coded in html template)
-        if img_uuid == '1ca509b27-cd33-45ab-9d71-6e1e2df48b09':
-            return None
-        img_data = imgCache[0].lookup(user_name, img_uuid)
-        if not img_data:
-            print('image uuid {} not present in cache'.format(img_uuid))
-            #checked if image with thumbail size is processed
-            img_data = GetThumbnailImage(img_uuid)
-            if not img_data:
-                img_data = ProcessImageThumbnail(GetPath(img_uuid))
-            #cache image
-            if img_data:
-                imgCache[0].insert(user_name, img_uuid, img_data)
-                if user_name in u_session:
-                    prefetch_ctx = u_session[user_name].get("current_album")
-                    if prefetch_ctx:
-                        threading.Thread(target=AutoLoadAlbum, args=(
-                            imgCache, user_name, prefetch_ctx, 10), daemon=True).start()
+            return make_response("invalid image request", 400)
+            #special case.(hard-coded in html template)
+        elif img_uuid == '1ca509b27-cd33-45ab-9d71-6e1e2df48b09':
+            return make_response("invalid image request", 400)
         else:
-            print('image uuid {} present in cache'.format(img_uuid))
+            img_data = imgCache[0].lookup(user_name, img_uuid)
+            if not img_data:
+                print('image uuid {} not present in cache'.format(img_uuid))
+                #checked if image with thumbail size is processed
+                img_data = GetThumbnailImage(img_uuid)
+                if not img_data:
+                    img_data = ProcessImageThumbnail(GetPath(img_uuid))
+                #cache image
+                if img_data:
+                    imgCache[0].insert(user_name, img_uuid, img_data)
+                    if user_name in u_session:
+                        prefetch_ctx = u_session[user_name].get("current_album")
+                        if prefetch_ctx:
+                            threading.Thread(target=AutoLoadAlbum, args=(
+                                imgCache, user_name, prefetch_ctx, 10), daemon=True).start()
+            else:
+                print('image uuid {} present in cache'.format(img_uuid))
 
         if img_data:
             response = make_response(img_data)
@@ -468,6 +471,7 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
             index = prefetch_ctx.next()
             if index is None:
                 print ("No image entries present for prefetching")
+                prefetch_ctx.progress = False
                 return
             img_uuid = prefetch_ctx.at(index)
             img_data = imgCache[0].lookup(user_name, img_uuid)
