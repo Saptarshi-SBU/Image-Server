@@ -86,6 +86,23 @@ class PhotoSizeModel(Base):
     def __repr__(self):
         return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
 
+class TopicModel(Base):
+    """
+	topic table to publish work items
+    """
+    __tablename__ = 'TopicTable'
+    UUID = Column(String(uuidLen), primary_key=True)
+    Topic = Column(String(stringLen), nullable=False)
+    JSONInput = Column(String(stringLen), nullable=False)
+    JSONOutput = Column(String(stringLen), nullable=True)
+    State = Column(Integer, nullable=False)
+    Day = Column(Integer, nullable=False)
+    Month = Column(Integer, nullable=False)
+    Year = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return "<%s(uuid : %s topic : %s, state : %d)>" % (self.UUID, self.Topic, self.State)
+
 # Model Queries
 def DBGetPhotos(_dbSession):
     """

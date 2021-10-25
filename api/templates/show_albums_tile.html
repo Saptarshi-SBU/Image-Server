@@ -58,12 +58,15 @@ span:last-child
 
 </style>
 
+
 <div class="header">
-	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value="<<" onclick="run_backward()"></input></span>
-    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">[Home] </a></span>
+	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value="<<" onclick="run_backward()"></input></span>
+    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">&#x1F3E0 </a></span>
     <span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/view">album_value </a></span>
-    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">[slideshow] </a></span>
-    <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;" value=">>" onclick="run_forward()" ></input></span>
+    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">	&#x2615 </a></span>
+    <span align="center"><input type="button" style="height:16px;width:32px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=&#x1F308 onclick="process_album()"></input></span>
+    <span align="center"><input type="button" style="height:16px;width:32px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=&#x2B07 onclick="download_album()"></input></span>
+    <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=">>" onclick="run_forward()" ></input></span>
 </div>
 
 <div class="row">
@@ -138,9 +141,77 @@ function show_album() {
     xmlhttp.send("album_value");
 }
 
+function process_album() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            console.log('\nlog: process album')
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/enhancealbum');
+    xmlhttp.send("album_value");
+}
+
 document.addEventListener("DOMContentLoaded", function() {
      show_album();
 });
+
+var custom_blob = null
+
+function download_album() {
+    if (custom_blob == null) {
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+                console.log("reply")
+            } else {
+                console.log(this.status)
+            }
+        };
+
+        xmlhttp.onload = function () {
+            if (this.status == 200) {
+                // Create a new Blob object using the response data of the onload object
+                var blob = new Blob([this.response], { type: 'application/zip' });
+                //Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
+                let a = document.createElement("a");
+                a.style = "display: none";
+                document.body.appendChild(a);
+                //Create a DOMString representing the blob and point the link element towards it
+                let url = window.URL.createObjectURL(blob);
+                //a.href = url;
+                a.setAttribute('href', url);
+                a.setAttribute('target', '_blank');
+                a.download = "album_value" + '.zip';
+                //programatically click the link to trigger the download
+                a.click();
+                //release the reference to the file by revoking the Object URL
+                window.URL.revokeObjectURL(url)
+            } else {
+                console.log('\nerror downloading :' + this.status)
+            }
+        }
+        xmlhttp.open("POST", "http://$SERVER_HOST_IP:4040/api/v1/downloadalbum", true);
+        xmlhttp.responseType = 'blob';
+        xmlhttp.send("album_value");
+        console.log('download :' + "album_value")
+    } else {
+        let a = document.createElement("a");
+        a.style = "display: none";
+        document.body.appendChild(a);
+        //Create a DOMString representing the blob and point the link element towards it
+        let url = window.URL.createObjectURL(custom_blob);
+        //a.href = url
+        a.setAttribute('href', url);
+        a.setAttribute('target', '_blank');
+        a.download = "album_value" + '_' + custom_filter + '.zip';
+        //programatically click the link to trigger the download
+        a.click();
+        //release the reference to the file by revoking the Object URL
+        window.URL.revokeObjectURL(url)
+        custom_blob = null
+    }
+}
 
 
 </script>

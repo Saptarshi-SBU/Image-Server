@@ -124,3 +124,19 @@ def TestImageSizeRatio(filepath):
 	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
 	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
 	return img_data.size, img_encoded.size
+
+def ProcessImageEnhanced(filepath):
+	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
+	if img_data is None:
+	    print ("invalid image file:", filepath)
+	    return None
+	filter = np.array([[-1, -1, -1], [-1, 9, -1],[-1, -1, -1]])
+	img_new = cv2.filter2D(img_data, -1, filter)
+	height = int(img_data.shape[0])
+	width  = int(img_data.shape[1])
+	#print (filepath, height, width)
+	img_frame = cv2.pyrDown(img_new, dstsize=(width // 2, height // 2))
+	img_frame = cv2.pyrDown(img_frame)
+	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
+	return img_encoded.tostring()

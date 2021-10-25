@@ -10,7 +10,7 @@ from sqlalchemy import and_
 import sqlalchemy
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
-from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel
+from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel, TopicModel
 from ..image_processing.filtering import GetImageDimensions
 
 CONFIG_FILE="/etc/api.cfg"
@@ -34,6 +34,11 @@ def GetThumbnailImageDir(cfg_file=CONFIG_FILE):
 	config = configparser.ConfigParser()
 	config.read(cfg_file)
 	return config.get("s_dir", "path")
+
+def GetEnhancedImageDir(cfg_file=CONFIG_FILE):
+	config = configparser.ConfigParser()
+	config.read(cfg_file)
+	return config.get("e_dir", "path")
 
 def GetDateTime2(imagePath):
 	fp = open(imagePath, 'rb')
@@ -66,6 +71,11 @@ def GetDateTimeLocal():
 def GetPath(img_uuid):
 	img_dir = GetImageDir(CONFIG_FILE)
 	imgPath = '{}/{}.JPG'.format(img_dir, img_uuid)
+	return imgPath
+
+def GetEnhancedImagePath(img_uuid):
+	img_dir = GetEnhancedImageDir(CONFIG_FILE)
+	imgPath = '{}/{}_e.JPG'.format(img_dir, img_uuid)
 	return imgPath
 
 def SortbyDate(jsonData):
@@ -430,6 +440,17 @@ def GetScaledImage(img_uuid):
 					img_data = f.read()
 	return img_data
 
+def GetEnhancedImage(img_uuid):
+	img_data = None
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).all()
+		for r in result:
+				imgPath = '{}{}_e.JPG'.format("/mnt/target/photos_enhanced/", r.UUID)
+				if os.path.exists(imgPath):
+					with open(imgPath, 'rb') as f:
+						img_data = f.read()
+	return img_data
 
 def GetThumbnailImage(img_uuid):
 	img_data = None
@@ -576,3 +597,36 @@ def DBGetPhotoNullDimensions():
 		for entry in entries:
 			result.append(entry.UUID)
 	return result
+
+def DBAddNewTopic(uuid, topic, input):
+	"""
+		publish new topic to PhotoTable
+	"""
+	[year, month, day, _] = GetDateTimeLocal()
+	entry = TopicModel(UUID=uuid, Topic=topic, JSONInput=input, JSONOutput="", \
+		State=0, Day=day, Month=month, Year=year)
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		_dbSession.add(entry)
+		_dbSession.commit()
+	return entry
+
+def DBGetNewTopics():
+	result = []
+	with DBManager() as db:
+		dbSession = db.getSession()
+		entries = dbSession.query(TopicModel)\
+                    .filter(TopicModel.State == 0).all()
+		for entry in entries:
+			result.append(entry)
+	return result
+
+
+def DBUpdateTopic(uuid, output, state):
+	with DBManager() as db:
+		dbSession = db.getSession()
+		entry = dbSession.query(TopicModel)\
+                    .filter(TopicModel.UUID == uuid).first()
+		entry.JSONOutput = output
+		entry.State = state
+		dbSession.commit()

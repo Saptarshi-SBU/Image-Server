@@ -22,9 +22,9 @@ from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import DBGetPhoto, InitPhotosDb
-from .db.query import InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetAlbumPhotos, GetAlbumViewItems, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetThumbnailImage, DBGetUserImage, DBSetUserImage
+from .db.query import DBAddNewTopic, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, DBGetPhotoLabel, DBAddPhotoLabel, \
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
 from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
@@ -33,6 +33,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_statistics import Statistics
 from flask_mail import Mail, Message
 import pymysql
+from zipfile import ZipFile
+
 pymysql.install_as_MySQLdb()
 
 # task entries
@@ -142,8 +144,12 @@ class GetPhotoRaw(Resource):
             return make_response("Invalid image request", 400)
         else:
             # objgraph.show_most_common_types()
-            return send_file(GetPath(img_uuid), mimetype='image/jpg')
-
+            # in case we have a processed image
+            e_path = GetEnhancedImagePath(img_uuid)
+            if os.path.exists(e_path):
+                return send_file(e_path, mimetype='image/jpg')
+            else:
+                return send_file(GetPath(img_uuid), mimetype='image/jpg')
 
 class GetPhotoScaled(Resource):
 
@@ -156,10 +162,15 @@ class GetPhotoScaled(Resource):
         scale_pc = request.args.get('scale')
         if scale_pc is None:
             scale_pc = 15
-        # checked if image with medium size is processed
-        img_data = GetScaledImage(img_uuid)
-        if not img_data:
-            img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+
+        img_data = GetEnhancedImage(img_uuid)
+        if img_data is None:
+            # checked if image with medium size is processed
+            img_data = GetScaledImage(img_uuid)
+            if not img_data:
+                img_data = ProcessImage(GetPath(img_uuid), int(scale_pc))
+        else:
+            print ('enhanced image path {}'.format(GetEnhancedImagePath(img_uuid)))
 
         if img_data:
             response = make_response(img_data)
@@ -351,6 +362,23 @@ class ViewAlbumPhotosAuto(Resource):
             response = make_response(data)
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
+
+
+class EnhanceAlbumPhotos(Resource):
+
+    def get(self):
+        return make_response()
+
+    def post(self):
+        json_input = dict()
+        img_uuid = uuid.uuid4()
+        img_album = request.data #urllib.parse.unquote(request.args.get('album'))
+        json_input["user_name"] = session.get("user_id")
+        json_input["img_album"] = img_album.decode("utf-8")
+        print('Enhanced Album :{}'.format(json_input))
+        DBAddNewTopic(img_uuid, "Enhance", json.dumps(json_input))
+        print('enhance image album :{}'.format(img_album))
+
 
 class UploadPhotos(Resource):
 
@@ -577,6 +605,41 @@ class DownloadPhoto(Resource):
         img_file = '{}.JPG'.format(img_uuid)
         return send_from_directory(GetImageDir(), img_file, as_attachment=True)
 
+
+def CreateArchive(user_id, img_album, archive):
+    result = GetAlbumPhotos(user_id, img_album)
+    uuid_list = GetImgUUIDList(result)
+    # truncate on open
+    if os.path.exists(archive):
+        os.truncate(archive, 0)
+    with ZipFile(archive, 'w') as zipObj:
+        for img_uuid in uuid_list:
+            e_path = GetEnhancedImagePath(img_uuid)
+            if os.path.exists(e_path):
+                # src, dst name
+                zipObj.write(e_path, os.path.basename(e_path),\
+                    compress_type=ZipFile.ZIP_DEFLATED)
+            else:
+                i_path = GetPath(img_uuid)
+                zipObj.write(i_path, os.path.basename(i_path),\
+                    compress_type=ZipFile.ZIP_DEFLATED)
+        zipObj.close()
+        print("archive for album created :{}".format(archive))
+
+class DownloadAlbum(Resource):
+
+    def get(self):
+        return make_response()
+
+    def post(self):
+        img_album = request.data
+        # using absolute path, flask apis seem to use relative path under api/
+        curwd = os.getcwd()
+        archive = '{}/{}.zip'.format(curwd,'album')
+        t = threading.Thread(target=CreateArchive, args=(
+            session.get("user_id"), img_album, archive), daemon=True).start()
+        t.join()
+        return send_file(archive, mimetype="application/zip")
 
 class Login(Resource):
 
@@ -822,6 +885,8 @@ api.add_resource(SearchPhotos, '/search')
 api.add_resource(GetMyAlbums, '/myalbums')
 api.add_resource(GetMyAlbum, '/myalbum')
 api.add_resource(ViewAlbumPhotosAuto, '/viewalbum')
+api.add_resource(EnhanceAlbumPhotos, '/enhancealbum')
+api.add_resource(DownloadAlbum, '/downloadalbum')
 api.add_resource(AutoCompleteAlbumSearch, '/autocomplete')
 api.add_resource(LikePhoto, '/likephoto')
 api.add_resource(UnlikePhoto, '/unlikephoto')
