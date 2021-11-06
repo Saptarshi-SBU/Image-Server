@@ -847,6 +847,15 @@ class PhotoMemory(Resource):
         else:
             return make_response() #render_template('nomemory.html'))
 
+
+class GetMusicTheme(Resource):
+
+    @nocacheresponse
+    def get(self):
+        audio_file = random.choice(os.listdir('{}'.format('api/music')))
+        print (audio_file)
+        return send_file('{}/{}'.format('music', audio_file), mimetype="audio/mpeg", cache_timeout=-1)
+
 def page_not_found(e):
     return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
 
@@ -905,6 +914,7 @@ api.add_resource(PhotoGrayScale, '/grayscale')
 api.add_resource(PhotoSharpenFilter, '/sharpenfilter')
 api.add_resource(PhotoSepiaFilter, '/sepiafilter')
 api.add_resource(PhotoMemory, '/memory')
+api.add_resource(GetMusicTheme, '/musictheme')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
