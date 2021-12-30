@@ -22,8 +22,8 @@ from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import DBGetPhoto, InitPhotosDb
-from .db.query import DBAddNewTopic, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, GetNumAlbums, DBGetPhotoLabel, DBAddPhotoLabel, \
+from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
@@ -206,7 +206,8 @@ class GetPhotoThumbnail(Resource):
                 if img_data:
                     imgCache[0].insert(user_name, img_uuid, img_data)
                     if user_name in u_session:
-                        prefetch_ctx = u_session[user_name].get("current_album")
+                        album_id = GetPhotoAlbumID(img_uuid)
+                        prefetch_ctx = u_session[user_name].get(str(album_id))
                         if prefetch_ctx:
                             threading.Thread(target=AutoLoadAlbum, args=(
                                 imgCache, user_name, prefetch_ctx, 10), daemon=True).start()
@@ -446,9 +447,10 @@ def GetImgUUIDList(album_photos):
 
 class AlbumPrefetchContext(object):
 
-    def __init__(self, name, itemList):
+    def __init__(self, name, album_id, itemList):
         self.index = 0
         self.album = name
+        self.album_id = album_id
         self.list = itemList
         self.progress = False
 
@@ -486,7 +488,7 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
             print("album prefetch already in progress")
             return
         prefetch_ctx.progress = True
-        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
+        u_session[user_name][prefetch_ctx.album_id] = jsonpickle.encode(prefetch_ctx)
         # in case album url remains cached client side
         if prefetch_ctx.size() == 0:
             prefetch_ctx.index = 0
@@ -511,16 +513,18 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
             else:
                 print('image already prefetched :{}'.format(img_uuid))
         prefetch_ctx.progress = False
-        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
+        u_session[user_name][prefetch_ctx.album_id] = jsonpickle.encode(prefetch_ctx)
         print('prefetching album completed')
 
 class GetMyAlbum(Resource):
 
     def get(self):
         img_album = urllib.parse.unquote(request.args.get('img'))
-        prefetch_ctx = AlbumPrefetchContext(img_album, list())
+        album_id = ConvertAlbumNameToID(img_album)
+        prefetch_ctx = AlbumPrefetchContext(img_album, str(album_id), list())
         user_name = session.get("user_id")
-        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
+        with prefetchMutex:
+            u_session[user_name][album_id] = jsonpickle.encode(prefetch_ctx)
         with open('api/templates/show_albums_tile.html', 'r') as fp:
             data = fp.read()
             data = data.replace("album_value", str(img_album))
@@ -532,10 +536,12 @@ class GetMyAlbum(Resource):
     def post(self):
         user_name = session.get("user_id")
         img_album = request.data
+        album_id = ConvertAlbumNameToID(img_album)
         result = GetAlbumPhotos(user_name, img_album)
-        prefetch_ctx = AlbumPrefetchContext(img_album, GetImgUUIDList(result))
-        u_session[user_name]["current_album"] = jsonpickle.encode(prefetch_ctx)
-        prefetch_ctx = u_session[user_name].get("current_album")
+        prefetch_ctx = AlbumPrefetchContext(img_album, str(album_id), GetImgUUIDList(result))
+        with prefetchMutex:
+            u_session[user_name][album_id] = jsonpickle.encode(prefetch_ctx)
+            prefetch_ctx = u_session[user_name].get(album_id)
         threading.Thread(target=AutoLoadAlbum, args=(
             imgCache, user_name, prefetch_ctx, 30), daemon=True).start()
         result_str = json.dumps(result)

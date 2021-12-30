@@ -79,6 +79,9 @@ def GetEnhancedImagePath(img_uuid):
 	imgPath = '{}/{}_e.JPG'.format(img_dir, img_uuid)
 	return imgPath
 
+def ConvertAlbumNameToID(album_name):
+	return comp_checksum([album_name])
+
 def SortbyDate(jsonData):
 	year  = int(jsonData["value"]["year"])
 	month = int(jsonData["value"]["month"])
@@ -358,7 +361,7 @@ def InsertPhoto(user_name, filename, fileBlob, description):
 	img_dir = GetImageDir(CONFIG_FILE)
 	img_uuid = uuid.uuid4()
 	digest = comp_checksum(fileBlob)
-	album_id = comp_checksum([description])
+	album_id = ConvertAlbumNameToID(description)
 
 	if TestDuplicate(user_name, fileBlob, digest):
 		print ("Detected duplicate entry")
