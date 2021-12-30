@@ -358,6 +358,7 @@ def InsertPhoto(user_name, filename, fileBlob, description):
 	img_dir = GetImageDir(CONFIG_FILE)
 	img_uuid = uuid.uuid4()
 	digest = comp_checksum(fileBlob)
+	album_id = comp_checksum([description])
 
 	if TestDuplicate(user_name, fileBlob, digest):
 		print ("Detected duplicate entry")
@@ -374,7 +375,7 @@ def InsertPhoto(user_name, filename, fileBlob, description):
 
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		DBAddPhoto(_dbSession, img_uuid, user_name, filename, digest, \
+		DBAddPhoto(_dbSession, img_uuid, album_id, user_name, filename, digest, \
 			year, month, day, secs, img_dir, " ", description)
 		_dbSession.commit()
 	print ('{} saved to disk'.format(filename))
@@ -407,6 +408,13 @@ def UpdatePhotoTag(img_uuid, tag):
 			i.Tags = tag
 		_dbSession.commit()
 		print ('Updated {} {}'.format(img_uuid, tag))
+
+def GetPhotoAlbumID(img_uuid):
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel).filter((PhotoModel.UUID == img_uuid)).first()
+		return result.AlbumID
+	return None
 
 def AutoCompleteAlbum(user_name, text):
 	tl = []

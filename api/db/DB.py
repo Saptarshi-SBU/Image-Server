@@ -41,11 +41,12 @@ class PhotoModel(Base):
     Likes = Column(String(stringLen), nullable=True)
     DayTime = Column(Integer, nullable=False)
     Username = Column(String(stringLen), nullable=False)
+    AlbumID = Column(String(uuidLen), nullable=True)
 
     def __repr__(self):
-        return "<%s(UUID : %s, Name :%s Digest :%s Year : %d, Month : %d " \
+        return "<%s(AlbumID :%s UUID : %s, Name :%s Digest :%s Year : %d, Month : %d " \
             "Day : %d NameSpace : %s NameSpace_Medium : %s Tags :%s Daytime :%d User :%s)" % (self.__tablename__, \
-            self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
+            self.AlbumID, self.UUID, self.Name, self.Digest, self.Year, self.Month, self.Day, self.NameSpace, \
             self.NameSpace_Medium, self.Tags, self.DayTime, self.Username)
 
 class LabelModel(Base):
@@ -115,9 +116,9 @@ def DBGetPhoto(_dbSession, imgUUID):
         fetch a row for the imgUUID
     """
     return _dbSession.query(PhotoModel).filter \
-        (PhotoModel.UUID==UUID).first()
+        (PhotoModel.UUID==imgUUID).first()
 
-def DBAddPhoto(_dbSession, UUID, Username, Name, Digest, Year, Month, Day, DayTime, NameSpace, NameSpace_Medium='', Tags=''):
+def DBAddPhoto(_dbSession, UUID, AlbumID, Username, Name, Digest, Year, Month, Day, DayTime, NameSpace, NameSpace_Medium='', Tags=''):
     """
         insert record
     """
@@ -131,7 +132,8 @@ def DBAddPhoto(_dbSession, UUID, Username, Name, Digest, Year, Month, Day, DayTi
                        NameSpace_Medium=NameSpace_Medium, \
                        Tags=Tags, \
                        DayTime=DayTime, \
-                       Username=Username)
+                       Username=Username, \
+                       AlbumID=AlbumID)
     _dbSession.add(photo)
     return photo
 
