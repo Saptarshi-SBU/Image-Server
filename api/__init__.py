@@ -23,7 +23,7 @@ from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import DBAddNewTopic, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, DBGetPhotoLabel, DBAddPhotoLabel, \
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, GetNumAlbums, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
@@ -286,10 +286,10 @@ class ViewPhotos(Resource):
         with open('api/templates/view_tile.html', 'r') as fp:
             data = fp.read()
             data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+            data = data.replace("$NUMALBUMS", str(GetNumAlbums(session.get("user_id"))))
             response = make_response(data)
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
-
 
 class EditPhotos(Resource):
 

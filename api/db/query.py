@@ -7,6 +7,7 @@ import exifread
 import configparser
 from sqlalchemy import func
 from sqlalchemy import and_
+from sqlalchemy import tuple_
 import sqlalchemy
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
@@ -277,6 +278,12 @@ def GetAlbumViewItems(user_name):
 		photoList.append(photoPaths[photo])
 	photoList.sort(key=SortbyDate, reverse=True)
 	return photoList
+
+def GetNumAlbums(user_name):
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		return _dbSession.query(PhotoModel.Tags).filter(PhotoModel.Username==user_name).distinct(PhotoModel.Tags).count()
+	return 0
 
 def FilterPhotoAlbums(user_name):
 	#deprecated
