@@ -201,7 +201,7 @@ class GetPhotoThumbnail(Resource):
                 #checked if image with thumbail size is processed
                 img_data = GetThumbnailImage(img_uuid)
                 if not img_data:
-                    img_data = ProcessImageThumbnail(GetPath(img_uuid))
+                    img_data = ProcessImageThumbnail(GetPath(img_uuid), http=False)
                 #cache image
                 if img_data:
                     imgCache[0].insert(user_name, img_uuid, img_data)
