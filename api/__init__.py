@@ -22,8 +22,8 @@ from functools import wraps, update_wrapper
 from flask_restful import Resource, Api, reqparse
 from flask import Flask, Blueprint, send_file, request, Response, make_response, send_from_directory, render_template, url_for, session, flash, jsonify
 from .db.DB import DBGetPhoto, InitPhotosDb
-from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
-    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
+from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
+    UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage
 from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
@@ -519,15 +519,17 @@ def AutoLoadAlbum(imgCache, user_name, prefetch_ctx, prefetch_count=10):
 class GetMyAlbum(Resource):
 
     def get(self):
+        user_name = session.get("user_id")
         img_album = urllib.parse.unquote(request.args.get('img'))
         album_id = ConvertAlbumNameToID(img_album)
+        album_dt = GetAlbumDates(user_name, str(img_album))
         prefetch_ctx = AlbumPrefetchContext(img_album, str(album_id), list())
-        user_name = session.get("user_id")
         with prefetchMutex:
             u_session[user_name][album_id] = jsonpickle.encode(prefetch_ctx)
         with open('api/templates/show_albums_tile.html', 'r') as fp:
             data = fp.read()
             data = data.replace("album_value", str(img_album))
+            data = data.replace("album_date", album_dt)
             data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
             response = make_response(data)
             response.headers.add('Access-Control-Allow-Origin', '*')
@@ -550,6 +552,31 @@ class GetMyAlbum(Resource):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
+
+class GetMyAlbumOnlyLiked(Resource):
+
+    def get(self):
+        user_name = session.get("user_id")
+        img_album = urllib.parse.unquote(request.args.get('img'))
+        album_dt = GetAlbumDates(user_name, str(img_album))
+        with open('api/templates/show_albums_liked_tile.html', 'r') as fp:
+            data = fp.read()
+            data = data.replace("album_value", str(img_album))
+            data = data.replace("album_date", album_dt)
+            data = data.replace("$SERVER_HOST_IP", HOST_ADDRESS)
+            response = make_response(data)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+
+    def post(self):
+        user_name = session.get("user_id")
+        img_album = request.data
+        result = GetAlbumPhotosOnlyLiked(user_name, img_album)
+        result_str = json.dumps(result)
+        # print img_album, result
+        response = make_response(result_str)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response 
 
 class AutoCompleteAlbumSearch(Resource):
 
@@ -899,6 +926,7 @@ api.add_resource(ListObjectPhotos, '/listlabeledphotos')
 api.add_resource(SearchPhotos, '/search')
 api.add_resource(GetMyAlbums, '/myalbums')
 api.add_resource(GetMyAlbum, '/myalbum')
+api.add_resource(GetMyAlbumOnlyLiked, '/myalbumliked')
 api.add_resource(ViewAlbumPhotosAuto, '/viewalbum')
 api.add_resource(EnhanceAlbumPhotos, '/enhancealbum')
 api.add_resource(DownloadAlbum, '/downloadalbum')

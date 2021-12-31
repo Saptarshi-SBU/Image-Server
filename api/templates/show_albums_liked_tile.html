@@ -129,7 +129,7 @@ function show_images() {
     next = i
 }
 
-function show_album() {
+function show_liked_album() {
     var xmlhttp  = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
@@ -139,7 +139,7 @@ function show_album() {
             show_images()
         }
     };
-    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbumliked');
     xmlhttp.send("album_value");
 }
 
@@ -155,7 +155,7 @@ function process_album() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-     show_album();
+     show_liked_album();
 });
 
 var custom_blob = null

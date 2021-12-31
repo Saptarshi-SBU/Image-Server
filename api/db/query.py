@@ -139,6 +139,29 @@ def GetAlbumPhotos(user_name, album):
 		_dbSession = db.getSession()
 		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album) \
 						.order_by(
+						PhotoModel.Year
+						).order_by(
+						PhotoModel.Month
+						).order_by(
+						PhotoModel.Day
+						).order_by(
+						PhotoModel.DayTime
+						)
+
+		for photo in result:
+			photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
+				photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes }})
+			#photoPaths.append(photo.UUID)
+		return photoPaths
+
+def GetAlbumPhotosOnlyLiked(user_name, album):
+	photoPaths = []
+	result = []
+
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album).filter((PhotoModel.Likes == "Like")) \
+						.order_by(
 						PhotoModel.Year.desc()
 						).order_by(
 						PhotoModel.Month.desc()
@@ -153,6 +176,31 @@ def GetAlbumPhotos(user_name, album):
 				photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes }})
 			#photoPaths.append(photo.UUID)
 		return photoPaths
+
+def GetAlbumDates(user_name, album):
+	dt = ""
+	result = []
+
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags==album) \
+						.order_by(
+						PhotoModel.Year
+						).order_by(
+						PhotoModel.Month
+						).order_by(
+						PhotoModel.Day
+						).order_by(
+						PhotoModel.DayTime
+						).all()
+
+		if len(result) > 0:
+			photo1 = result[0]
+			start = '{}/{}/{}'.format(photo1.Month, photo1.Day, photo1.Year)
+			photo2 = result[len(result) - 1]
+			end =  '{}/{}/{}'.format(photo2.Month, photo2.Day, photo2.Year)
+			dt = '{}-{}'.format(start, end)
+		return dt
 
 def FilterPhotos(user_name, start_year, to_year, album=None):
 	photoPaths = []
