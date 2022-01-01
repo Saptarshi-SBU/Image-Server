@@ -2,7 +2,16 @@
 <html>
 <body>
 
-<h2>My GooglePhotos Syncer</h2>
+<div class="header">
+    <span align="center">
+        <h2>
+            My GooglePhotos Syncer
+           <a style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=My Google Photos">&#x23fa</a> 
+           <a style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/gauto">&#x2615 </a>
+           <input type="button" style="height:16px;width:32px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=&#x1F308 onclick="process_album()"></input>
+        </h2>
+    </span>
+</div>
 
 <form>
   <a href="http://$SERVER_HOST_IP:4040/api/v1/import" target="_blank">Click to Authorize</a><br><br>
@@ -15,6 +24,7 @@
 
 <script>
 
+var album_name = "My Google Photos"
 function run_import() {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -32,6 +42,17 @@ function run_import() {
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/import', true);
     xmlhttp.send(elem.value);
     console.log(elem.value)
+}
+
+function process_album() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            console.log('\nlog: process album')
+        }
+    };
+    xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/enhancealbum');
+    xmlhttp.send(album_name);
 }
 
 var source = new EventSource('http://$SERVER_HOST_IP:4040/api/v1/importstatus');

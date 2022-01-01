@@ -17,26 +17,6 @@ from ..image_processing.filtering import ProcessImageEnhanced
 #progressbar
 pg = {}
 
-def ConvertPhotosEnhancedSingleThreaded(uuid_list):
-	with DBManager() as db: 
-		pg[0] = 0
-		print ('total records :{}'.format(len(uuid_list)))
-		for uuid in uuid_list:
-			imgPath = '{}/{}.JPG'.format(GetImageDir(), uuid)
-			imgPath2 = '{}/{}_e.JPG'.format(GetEnhancedImageDir(), uuid)
-			fd = os.open(imgPath2, os.O_CREAT | os.O_RDWR)
-			if fd > 0:
-				data = ProcessImageEnhanced(imgPath)
-				num_bytes = os.write(fd, data)
-				if len(data) == num_bytes:
-					print (num_bytes, imgPath2)
-				else:
-					print ('processed file write does not match expected bytes')
-				os.close(fd)
-				pg[0] += 1
-				if pg[0] % 100 == 0:
-			   		print ('completed :{}%'.format((pg[0] * 100)/len(uuid_list)))
-
 def ConvertPhotosEnhancedMultiThreaded(uuid_list, partn, step_size):
 	pg[partn] = 0
 	begin = partn * step_size
@@ -47,10 +27,24 @@ def ConvertPhotosEnhancedMultiThreaded(uuid_list, partn, step_size):
 	for uuid in uuid_list[begin : end]:
 		imgPath = '{}/{}.JPG'.format(GetImageDir(), uuid)
 		imgPath2 = '{}/{}_e.JPG'.format(GetEnhancedImageDir(), uuid)
-		fd = os.open(imgPath2, os.O_CREAT | os.O_RDWR)
-		if fd > 0:
-			data = ProcessImageEnhanced(imgPath)
-			os.write(fd, data)
+		#check exists
+		#try:
+		#	fd = os.open(imgPath2, os.O_RDONLY)
+		#	os.close(fd)
+		#	continue
+		#except:
+		#	pass
+		try:
+			fd = os.open(imgPath2, os.O_CREAT | os.O_RDWR)
+			if fd > 0:
+				data = ProcessImageEnhanced(imgPath)
+				num_bytes = os.write(fd, data)
+				if len(data) > num_bytes:
+					print ('processed file write does not match expected bytes')
+		except:
+			print ("error processing image file :{}".format(imgPath2))
+
+		if fd > 0 :
 			os.close(fd)
 		pg[partn] += 1
 
@@ -83,20 +77,13 @@ def ScannerDriver(num_threads):
 				print ('processing Album:{} NumImages:{} Concurrency:{}'.format\
 					(json_input["img_album"], len(uuid_list), num_threads))
 
-				if num_threads == 1:
-					t = threading.Thread(target=ConvertPhotosEnhancedSingleThreaded,
-						args=(uuid_list))
+				step_size = int(len(uuid_list) / num_threads)
+				for i in range(num_threads + 1):
+					t = threading.Thread(target=ConvertPhotosEnhancedMultiThreaded,
+						args=(uuid_list, i, step_size))
 					threads.append(t)
 					t.start()
-				else:
-					step_size = int(len(uuid_list) / num_threads)
-					for i in range(num_threads + 1):
-						t = threading.Thread(target=ConvertPhotosEnhancedMultiThreaded,
-							args=(uuid_list, i, step_size))
-						threads.append(t)
-						t.start()
-					time.sleep(2)
-
+				time.sleep(2)
 				json_output = ''' { "result" : "Progress" } '''
 				DBUpdateTopic(r.UUID, json_output, 1) 
 				threading.Thread(target=ScannerProgressBar, args=[len(uuid_list)]).start()

@@ -682,7 +682,7 @@ def DBGetNewTopics():
 	with DBManager() as db:
 		dbSession = db.getSession()
 		entries = dbSession.query(TopicModel)\
-                    .filter(TopicModel.State == 0).all()
+                    .filter(TopicModel.State < 2).all()
 		for entry in entries:
 			result.append(entry)
 	return result
