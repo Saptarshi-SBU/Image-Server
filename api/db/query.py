@@ -1,4 +1,5 @@
 import os
+import json
 import uuid
 import random
 import datetime
@@ -669,13 +670,13 @@ def DBAddNewTopic(uuid, topic, input):
 		publish new topic to PhotoTable
 	"""
 	[year, month, day, _] = GetDateTimeLocal()
-	entry = TopicModel(UUID=uuid, Topic=topic, JSONInput=input, JSONOutput="", \
-		State=0, Day=day, Month=month, Year=year)
 	with DBManager() as db:
+		entry = TopicModel(UUID=uuid, Topic=topic, JSONInput=input, JSONOutput="", \
+			State=0, Day=day, Month=month, Year=year)
 		_dbSession = db.getSession()
 		_dbSession.add(entry)
 		_dbSession.commit()
-	return entry
+	return uuid
 
 def DBGetNewTopics():
 	result = []
@@ -696,3 +697,51 @@ def DBUpdateTopic(uuid, output, state):
 		entry.JSONOutput = output
 		entry.State = state
 		dbSession.commit()
+
+def DBGetNextSyncTopic():
+	tuuid = None
+	json_input = None
+	with DBManager() as db:
+		dbSession = db.getSession()
+		result = dbSession.query(TopicModel)\
+					.filter(TopicModel.Topic == "GPhotos") \
+                    .filter(TopicModel.State < 2).first()
+		if result:
+			tuuid = result.UUID
+			json_input = json.loads(result.JSONInput)
+	return tuuid, json_input
+
+def DBGetLastSyncTopic():
+	tuuid = None
+	json_input = None
+	with DBManager() as db:
+		dbSession = db.getSession()
+		result = dbSession.query(TopicModel)\
+					.filter(TopicModel.Topic == "GPhotos") \
+                    .filter(TopicModel.State == 2).all()
+		if result:
+			result = [r for r in result]
+			n = len(result)
+			if n > 0:
+				tuuid = result[n - 1].UUID
+				json_input = json.loads(result[n-1].JSONInput)
+	return tuuid, json_input
+
+
+def DBDeleteSyncTopic(tuuid):
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		result = _dbSession.query(TopicModel).filter((PhotoModel.UUID == tuuid)).all()
+		for i in result:
+			_dbSession.delete(i)
+		_dbSession.commit()
+
+def DBGetSyncTopics():
+	photoPaths = []
+	with DBManager() as db:
+		dbSession = db.getSession()
+		result = dbSession.query(TopicModel)\
+					.filter(TopicModel.Topic == "GPhotos").all()
+		for photo in result:
+			photoPaths.append({ "value" : { "uuid" : photo.UUID, "period" : photo.JSONInput, "result" : photo.JSONOutput}})
+	return photoPaths

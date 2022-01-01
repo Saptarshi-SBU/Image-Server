@@ -1,7 +1,35 @@
 <!DOCTYPE html>
 <html>
-<body>
 
+<style>
+.synctable {
+    text-align: center;
+    color: darkblue;
+    height: 50px;
+    padding-top: 10px;
+    padding-right: 32px;
+}
+
+.synctableHeaderRow {
+    text-align: center;
+    color: darkblue;
+    font-weight: bold;
+    height: 50px;
+    padding-top: 10px;
+    padding-right: 32px;
+    border : 1px solid black;
+}
+
+.synctable tr td {
+height: 50px;
+padding-top: 10px;
+padding-right: 32px;
+border : 1px solid black;
+}
+
+</style>
+
+<body>
 <div class="header">
     <span align="center">
         <h2>
@@ -22,9 +50,14 @@
 	<progress id="progressbar" value="0" max="100"> 0% </progress>
 </form> 
 
+<br>
+<div class='synctable'></div>
+</br>
+
 <script>
 
 var album_name = "My Google Photos"
+
 function run_import() {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -64,6 +97,80 @@ source.onmessage = function(event) {
         source.close()
     }
 }
+
+const syncDiv = document.querySelector("div.synctable")
+//let tableHeaders = ["Index", "Period", "Images Downloaded", "Errors"]
+let tableHeaders = ["Sync Table"]
+
+const createSyncTable = () => {
+        while (syncDiv.firstChild)
+            syncDiv.removeChild(syncDiv.firstChild) // Remove all children if any
+
+        let syncTable = document.createElement('table')
+        syncTable.className = 'synctable'
+
+        let syncTableHead = document.createElement('thead')
+        syncTableHead.className = 'synctableHead'
+
+        let syncTableHeaderRow = document.createElement('tr')
+        syncTableHeaderRow.className = 'synctableHeaderRow'
+
+        tableHeaders.forEach(header => {
+            let syncHeader = document.createElement('th')
+            syncHeader.innerText = header
+            syncTableHeaderRow.append(syncHeader)
+        })
+
+        syncTableHead.append(syncTableHeaderRow)
+        syncTable.append(syncTableHead)
+
+        let syncTableBody = document.createElement('tbody')
+        syncTableBody.className = "syncTableBody"
+        syncTable.append(syncTableBody)
+
+        syncDiv.append(syncTable)
+}
+
+const appendEntry = (singleRecord, index) => {
+    const syncTable = document.querySelector('.synctable')
+
+    let syncTableBodyRow = document.createElement('tr')
+    syncTableBodyRow.className = 'synctableBodyRow'
+
+    let syncIndex = document.createElement('td')
+    syncIndex.innerText = index
+
+    let syncPeriod = document.createElement('td')
+    syncPeriod.innerText = singleRecord.period
+
+    let result = document.createElement('td')
+    result.innerText = singleRecord.result
+
+    syncTableBodyRow.append(syncIndex, syncPeriod, result)
+    syncTable.append(syncTableBodyRow)
+}
+
+function update_syncpoints() {
+    var xmlhttp  = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            console.log('\nlog: update sync points')
+            createSyncTable()
+            var arr = JSON.parse(xmlhttp.responseText)
+            for (i = 0; i < arr.length; i++) {
+                record = {
+                    "period": arr[i].value.period,
+                    "result": arr[i].value.result
+                }
+                appendEntry(record, i)
+            }
+        }
+    };
+    xmlhttp.open("GET", 'http://$SERVER_HOST_IP:4040/api/v1/importsyncpoints');
+    xmlhttp.send();
+}
+
+update_syncpoints()
 
 </script>
 </body>

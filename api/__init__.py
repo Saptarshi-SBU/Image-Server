@@ -24,10 +24,10 @@ from flask import Flask, Blueprint, send_file, request, Response, make_response,
 from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics
 from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
 from .image_processing import imgcache
-from .svc.gphotos_syncer_svc import gclient_get_response_code, GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
+from .svc.gphotos_syncer_v2_svc import GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy
 from flask_statistics import Statistics
@@ -778,6 +778,15 @@ class ImportPhotosStatus(Resource):
         return Response(generate(session.get("user_id")), mimetype='text/event-stream')
 
 
+class ImportPhotoSyncPoints(Resource):
+
+    def get(self):
+        result = DBGetSyncTopics()
+        result_str = json.dumps(result)
+        response = make_response(result_str)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
 class PhotoLabel(Resource):
 
     def get(self):
@@ -941,6 +950,7 @@ api.add_resource(LogOut, '/logout')
 api.add_resource(AuthorizeImportPhotos, '/authorizeimport')
 api.add_resource(ImportPhotos, '/import')
 api.add_resource(ImportPhotosStatus, '/importstatus')
+api.add_resource(ImportPhotoSyncPoints, '/importsyncpoints')
 api.add_resource(PhotoLabel, '/label')
 api.add_resource(PhotoNotLabel, '/nolabel')
 api.add_resource(SetWallPhoto, '/wallphoto')
