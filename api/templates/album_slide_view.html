@@ -69,8 +69,7 @@ xmlhttp.onreadystatechange = function() {
     }
 };
 xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
-xmlhttp.send("album_value");
-
+xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": 0}));
 </script>
 
 </html>

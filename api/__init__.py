@@ -378,6 +378,8 @@ class EnhanceAlbumPhotos(Resource):
         json_input["img_album"] = img_album.decode("utf-8")
         print('Enhanced Album :{}'.format(json_input))
         DBAddNewTopic(img_uuid, "Enhance", json.dumps(json_input))
+        img_uuid = uuid.uuid4()
+        DBAddNewTopic(img_uuid, "ComputeBlur", json.dumps(json_input))
         print('enhance image album :{}'.format(img_album))
 
 
@@ -537,9 +539,11 @@ class GetMyAlbum(Resource):
 
     def post(self):
         user_name = session.get("user_id")
-        img_album = request.data
+        json_data = json.loads(request.data)
+        img_album = json_data["album_id"]
+        blur =  int(json_data["blur"])
         album_id = ConvertAlbumNameToID(img_album)
-        result = GetAlbumPhotos(user_name, img_album)
+        result = GetAlbumPhotos(user_name, img_album, blur)
         prefetch_ctx = AlbumPrefetchContext(img_album, str(album_id), GetImgUUIDList(result))
         with prefetchMutex:
             u_session[user_name][album_id] = jsonpickle.encode(prefetch_ctx)
@@ -547,7 +551,7 @@ class GetMyAlbum(Resource):
         threading.Thread(target=AutoLoadAlbum, args=(
             imgCache, user_name, prefetch_ctx, 30), daemon=True).start()
         result_str = json.dumps(result)
-        # print img_album, result
+        print ('album {} num_photos {} blur {}'.format(img_album, len(result), blur))
         response = make_response(result_str)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response

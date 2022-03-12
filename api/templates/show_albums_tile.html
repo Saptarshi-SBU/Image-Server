@@ -62,9 +62,13 @@ span:last-child
 	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value="<<" onclick="run_backward()"></input></span>
     <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">&#x1F3E0 </a></span>
     <span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/view">album_value (album_date)</a></span>
-    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">	&#x2615 </a></span>
-    <span align="center"><input type="button" style="height:16px;width:32px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=&#x1F308 onclick="process_album()"></input></span>
-    <span align="center"><input type="button" style="height:16px;width:32px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=&#x2B07 onclick="download_album()"></input></span>
+    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">	Show &#x2615 </a></span>
+    <span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Enhance</a></span>
+    <span align="center"><input type="button" style="font-size:16px" value=&#x1F308 onclick="process_album()"></input></span>
+    <span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Download</a></span>
+    <span align="center"><input type="button" style="font-size:16px" value=&#x2B07 onclick="download_album()"></input></span>
+    <label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer" for="blur">Blur</label>
+    <span align="center"><input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Blur" id="sliderBlur" onchange="show_album()"></input></span>
     <span align="right" style="height:24px;width:64px;font-size:16px;color:blue;"><a id="n"> </a></span>
     <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=">>" onclick="run_forward()" ></input></span>
 </div>
@@ -139,8 +143,13 @@ function show_album() {
             show_images()
         }
     };
+
+    var rangeslider = document.getElementById("sliderBlur");
+
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
-    xmlhttp.send("album_value");
+    xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": rangeslider.value}));
+    //xmlhttp.send("album_value");
 }
 
 function process_album() {

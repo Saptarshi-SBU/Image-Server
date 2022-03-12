@@ -87,6 +87,17 @@ class PhotoSizeModel(Base):
     def __repr__(self):
         return "<%s(UUID : %s, Username : %s)>" % (self.UUID, self.Username)
 
+class PhotoBlurModel(Base):
+    """
+	blur score table
+    """
+    __tablename__ = 'PhotoBlurTable'
+    UUID = Column(String(uuidLen), primary_key=True)
+    Blur = Column(Integer, nullable=True)
+
+    def __repr__(self):
+        return "<%s(UUID : %s, BlurScore : %d)>" % (self.UUID, self.Blur)
+
 class TopicModel(Base):
     """
 	topic table to publish work items

@@ -12,7 +12,7 @@ from sqlalchemy import tuple_
 import sqlalchemy
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
-from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel, TopicModel
+from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel, PhotoBlurModel, TopicModel
 from ..image_processing.filtering import GetImageDimensions
 
 CONFIG_FILE="/etc/api.cfg"
@@ -132,7 +132,7 @@ def LookupPhotosByDate(user_name, year, month, day=None):
 			photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
 	return photoPaths
 
-def GetAlbumPhotos(user_name, album):
+def GetAlbumPhotos(user_name, album, blur=0):
 	photoPaths = []
 	result = []
 
@@ -150,8 +150,9 @@ def GetAlbumPhotos(user_name, album):
 						)
 
 		for photo in result:
-			photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
-				photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes }})
+			if DBGetPhotoBlur(photo.UUID) >= blur:
+				photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
+					photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes }})
 			#photoPaths.append(photo.UUID)
 		return photoPaths
 
@@ -745,3 +746,27 @@ def DBGetSyncTopics():
 		for photo in result:
 			photoPaths.append({ "value" : { "uuid" : photo.UUID, "period" : photo.JSONInput, "result" : photo.JSONOutput}})
 	return photoPaths
+
+def DBGetPhotoBlur(imgUUID):
+	"""
+		fetch a row for the imgUUID
+	"""
+	entry = None
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		entry =  _dbSession.query(PhotoBlurModel).filter(PhotoBlurModel.UUID==imgUUID).first()
+		if entry:
+			return entry.Blur
+		else:
+			return 0
+
+def DBAddPhotoBlur(imgUUID, blur):
+	"""
+		insert record
+	"""
+	entry = PhotoBlurModel(UUID=imgUUID, Blur=blur)
+	with DBManager() as db:
+		_dbSession = db.getSession()
+		_dbSession.add(entry)
+		_dbSession.commit()
+	return entry

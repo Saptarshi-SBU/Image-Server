@@ -128,8 +128,8 @@ def TestImageSizeRatio(filepath):
 def ProcessImageEnhanced(filepath):
 	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
 	if img_data is None:
-	    print ("invalid image file:", filepath)
-	    return None
+		print ("invalid image file:", filepath)
+		return None
 	filter = np.array([[-1, -1, -1], [-1, 9, -1],[-1, -1, -1]])
 	img_new = cv2.filter2D(img_data, -1, filter)
 	height = int(img_data.shape[0])
@@ -140,3 +140,9 @@ def ProcessImageEnhanced(filepath):
 	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
 	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
 	return img_encoded.tostring()
+
+#Laplacian, second degree derivative. More blur has less edges
+def ComputeImageBlur(filepath):
+	img_data = cv2.imread(filepath)
+	gray = cv2.cvtColor(img_data, cv2.COLOR_BGR2GRAY)
+	return cv2.Laplacian(gray, cv2.CV_64F).var()
