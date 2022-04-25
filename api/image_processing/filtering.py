@@ -2,7 +2,7 @@ import io
 import cv2
 import numpy as np
 import base64
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 from flask import send_file
 
 def GetImageDimensions(filepath):
@@ -146,3 +146,53 @@ def ComputeImageBlur(filepath):
 	img_data = cv2.imread(filepath)
 	gray = cv2.cvtColor(img_data, cv2.COLOR_BGR2GRAY)
 	return cv2.Laplacian(gray, cv2.CV_64F).var()
+
+def ProcessImageSaturation(filepath):
+	image = Image.open(filepath)
+	new_image = ImageEnhance.Color(image).enhance(1.2)
+	roi = io.BytesIO()
+	new_image.save(roi, format='JPEG')
+	roi.seek(0)
+	print("image saturation applied")
+	return base64.b64encode(roi.getvalue()).decode('utf-8')
+	#return send_file(roi, mimetype='image/jpg')
+	#return roi.getvalue() # send_file(roi, mimetype='image/jpg')
+
+def ProcessImage2HSV(filepath):
+	img_data = cv2.imread(filepath) #, cv2.IMREAD_COLOR)
+	if img_data is None:
+		print ("invalid image file:", filepath)
+		return None
+	HSV_img = cv2.cvtColor(img_data,cv2.COLOR_BGR2HSV)
+	#encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+	_, img_encoded = cv2.imencode('.png', HSV_img) # encode converts to bytes
+	print("image hsv applied")
+	return img_encoded.tostring()
+
+def ProcessImageEffects(filepath, sharpen, saturation):
+	image = Image.open(filepath)
+	new_image = ImageEnhance.Color(image).enhance(saturation)
+	new_image = ImageEnhance.Sharpness(new_image).enhance(sharpen)
+	roi = io.BytesIO()
+	new_image.save(roi, format='JPEG')
+	roi.seek(0)
+	print("image effects applied")
+	return base64.b64encode(roi.getvalue()).decode('utf-8')
+
+def ProcessImageSharpenGrayScaleFilter(filepath, sharpen):
+	image = Image.open(filepath)
+	new_image = ImageEnhance.Sharpness(image).enhance(sharpen)
+	gray_image = ImageOps.grayscale(new_image)
+	roi = io.BytesIO()
+	gray_image.save(roi, format='JPEG')
+	roi.seek(0)
+	print("image effects applied")
+	return base64.b64encode(roi.getvalue()).decode('utf-8')
+
+def ProcessImageDummyFilter(filepath):
+	image = Image.open(filepath)
+	roi = io.BytesIO()
+	image.save(roi, format='JPEG')
+	roi.seek(0)
+	print("image effects applied")
+	return base64.b64encode(roi.getvalue()).decode('utf-8')

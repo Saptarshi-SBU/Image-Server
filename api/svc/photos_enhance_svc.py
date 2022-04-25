@@ -74,8 +74,8 @@ def ScannerDriver(num_threads):
 				json_input = json.loads(r.JSONInput)
 				result = GetAlbumPhotos(json_input["user_name"], json_input["img_album"])
 				uuid_list = GetImgUUIDList(result)
-				print ('processing Album:{} NumImages:{} Concurrency:{}'.format\
-					(json_input["img_album"], len(uuid_list), num_threads))
+				print ('rUUID :{} processing Album:{} NumImages:{} Concurrency:{}'.format\
+					(r.UUID, json_input["img_album"], len(uuid_list), num_threads))
 
 				step_size = int(len(uuid_list) / num_threads)
 				for i in range(num_threads + 1):
@@ -85,12 +85,12 @@ def ScannerDriver(num_threads):
 					t.start()
 				time.sleep(2)
 				json_output = ''' { "result" : "Progress" } '''
-				DBUpdateTopic(r.UUID, json_output, 1) 
+				DBUpdateTopic(r.UUID, r.Topic, json_output, 1)
 				threading.Thread(target=ScannerProgressBar, args=[len(uuid_list)]).start()
 				for t in threads:
 					t.join()
 				json_output = ''' { "result" : "Done" } '''
-				DBUpdateTopic(r.UUID, json_output, 2) 
+				DBUpdateTopic(r.UUID, r.Topic, json_output, 2)
 		time.sleep(60)
 
 

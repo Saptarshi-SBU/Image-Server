@@ -47,6 +47,72 @@ span:last-child
     float: right;
 }
 
+/* Dropdown Button */
+.dropbtn {
+  background-color: #3498DB;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+  background-color: #2980B9;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
+
+.settingsForm {
+        position: relative;
+        text-align: center;
+        width: 100%;
+}
+
+.settingsPopup {
+        display: none;
+        position: fixed;
+        left: 45%;
+        top: 5%;
+        transform: translate(-50%, 5%);
+        border: 3px solid #999999;
+        z-index: 9;
+}
+
+.formContainer {
+    max-width: 300px;
+    padding: 20px;
+    background-color: #fff;
+}
+
 </style>
 </head>
 
@@ -58,20 +124,67 @@ span:last-child
 
 </style>
 
+<!--
+<span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">	Show &#x2615 </a></span>
+<span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Enhance</a></span>
+<span align="center"><input type="button" style="font-size:16px" value=&#x1F308 onclick="process_album()"></input></span>
+<span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Download</a></span>
+<span align="center"><input type="button" style="font-size:16px" value=&#x2B07 onclick="download_album()"></input></span>
+<label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer" for="blur">Blur</label>
+<span align="center"><input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Blur" id="sliderBlur" onchange="show_album()"></input></span>
+
+<div class="dropdown">
+    <button onclick="myFunction()" class="dropbtn">Menu</button>
+    <div id="myDropdown" class="dropdown-content">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+
+<span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">&#x1F3E0 </a></span>
+
+-->
+
 <div class="header">
 	<span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value="<<" onclick="run_backward()"></input></span>
-    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1">&#x1F3E0 </a></span>
-    <span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/view">album_value (album_date)</a></span>
-    <span align="center" style="font-size: 16px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">	Show &#x2615 </a></span>
-    <span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Enhance</a></span>
-    <span align="center"><input type="button" style="font-size:16px" value=&#x1F308 onclick="process_album()"></input></span>
-    <span align="center" style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer"><a>Download</a></span>
-    <span align="center"><input type="button" style="font-size:16px" value=&#x2B07 onclick="download_album()"></input></span>
-    <label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer" for="blur">Blur</label>
-    <span align="center"><input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Blur" id="sliderBlur" onchange="show_album()"></input></span>
-    <span align="right" style="height:24px;width:64px;font-size:16px;color:blue;"><a id="n"> </a></span>
+    <span align="center" style="font-size: 24px;"><a href="http://$SERVER_HOST_IP:4040/api/v1/view">album_value</a></span>
+    <div class="dropdown">
+        <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" class="dropbtn" id="addmenu" value=&#9776 onclick="run_menu()" ></input></span>
+        <div id="myDropdown" class="dropdown-content">
+            <a id="m1" style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">SlideShow</a>
+            <a id="m2" style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/myalbumliked?album=album_value">Favourites</a>
+            <a id="m3" style="font-size: 16px;" href="#settings" onclick="show_settings()">Settings</a>
+            <a id="m4" style="font-size: 16px;" href="#download" onclick="download_album()">Download</a>
+        </div>
+    </div>
     <span><input type="button" style="height:24px;width:64px;font-size:16px;color:blue;background-color:Transparent;border:None;cursor:pointer" value=">>" onclick="run_forward()" ></input></span>
 </div>
+
+<div class="settingsForm">
+    <div class="settingsPopup" id="settingsPopupId">
+      <form action="javascript:void(0);" method="post" class="formContainer">
+        <h3>Apply Settings</h3>
+        <br>
+        <label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer" for="sharpen">Sharpen</label>
+        <input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Sharpen" id="sharpen"></input>
+        <br>
+        <br>
+        <label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer" for="blur">Blur</label>
+        <input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Blur" id="sliderBlur" onchange="updateBlurVal(this.value)" ></input>
+        <br><br>
+        <input type="submit" value="Apply" onclick="apply_settings()">
+      </form>
+    </div>
+  </div>
+
+<h2>
+<div style="margin:0 auto;text-align: left;height:24px;width:256px;font-size:16px;color:blue;">
+    <label id="l1">album_date</label>
+    <label id="l2"></label>
+</div>
+</h2>
+
 
 <div class="row">
     <div class="column"><h2><a id="a1" href="http://$SERVER_HOST_IP:4040/api/v1/edit?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09" target="_blank"><img id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/thumbnailphoto?img=1ca509b27-cd33-45ab-9d71-6e1e2df48b09"></a></h2> </div>
@@ -95,6 +208,7 @@ span:last-child
 
 var arr;
 var next = 0;
+var rangeBlur = 0;
 
 function run_forward() {
 	show_images()
@@ -107,12 +221,32 @@ function run_backward() {
 	show_images()
 }
 
+function enhance_album() {
+    process_album()
+    concole.log("\n : sharpen images")
+}
+
+function show_settings() {
+    document.getElementById("settingsPopupId").style.display = "block";
+    return false;
+}
+
+function apply_settings() {
+    document.getElementById("settingsPopupId").style.display = "none";
+    process_album()
+    next = 0 // reset
+    show_album()
+    window.location.reload();
+    return false
+}
+
 function show_images() {
     var i = 0;
     if (next >= arr.length)
 	return;
-    pc = document.getElementById("n")
-    pc.innerHTML = String(next + 9) + "/" + String(arr.length)
+    pc = document.getElementById("l2")
+    var s = "(" + (next + 9) + "/" + String(arr.length) + ")"
+    pc.innerHTML = s
     for (i = next, k = 1; i < next + 9; i++, k++) {
         if (i < arr.length) {
     	    var img_urls = ""
@@ -145,10 +279,16 @@ function show_album() {
     };
 
     var rangeslider = document.getElementById("sliderBlur");
+    rb = localStorage.getItem("rangeSliderVal");
+    if (rb === null) {
+        rb = 0
+    }
 
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
     xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": rangeslider.value}));
+    console.log("request blur value :" + rangeslider.value)
+    console.log("request blur value :" + rb)
+    xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": rb}));
     //xmlhttp.send("album_value");
 }
 
@@ -161,6 +301,7 @@ function process_album() {
     };
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/enhancealbum');
     xmlhttp.send("album_value");
+    return false
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -206,6 +347,8 @@ function download_album() {
         xmlhttp.responseType = 'blob';
         xmlhttp.send("album_value");
         console.log('download :' + "album_value")
+        var x = document.getElementById("m4");
+        x.text = "Downloaded \u2713"
     } else {
         let a = document.createElement("a");
         a.style = "display: none";
@@ -222,8 +365,32 @@ function download_album() {
         window.URL.revokeObjectURL(url)
         custom_blob = null
     }
+    return false
 }
 
+function run_menu() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+function updateBlurVal(value) {
+    rangeBlur = value
+    console.log("new range blur " + rangeBlur)
+    localStorage.setItem("rangeSliderVal", rangeBlur);
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
 
 </script>
 </body>

@@ -25,7 +25,7 @@ from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics
-from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter
+from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter
 from .image_processing import imgcache
 from .svc.gphotos_syncer_v2_svc import GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -376,12 +376,10 @@ class EnhanceAlbumPhotos(Resource):
         img_album = request.data #urllib.parse.unquote(request.args.get('album'))
         json_input["user_name"] = session.get("user_id")
         json_input["img_album"] = img_album.decode("utf-8")
-        print('Enhanced Album :{}'.format(json_input))
+        print('Enhanced Album Request:{}'.format(json_input))
         DBAddNewTopic(img_uuid, "Enhance", json.dumps(json_input))
         img_uuid = uuid.uuid4()
         DBAddNewTopic(img_uuid, "ComputeBlur", json.dumps(json_input))
-        print('enhance image album :{}'.format(img_album))
-
 
 class UploadPhotos(Resource):
 
@@ -539,6 +537,8 @@ class GetMyAlbum(Resource):
 
     def post(self):
         user_name = session.get("user_id")
+        json_data2 = request.get_json() # also works
+        print (json_data2)
         json_data = json.loads(request.data)
         img_album = json_data["album_id"]
         blur =  int(json_data["blur"])
@@ -863,6 +863,54 @@ class PhotoSepiaFilter(Resource):
         response.headers.set('Content-Type', 'image/jpg')
         return response
 
+class PhotoColorSaturation(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print(request.data)
+        img_uuid = request.data.decode("utf-8")
+        print(img_uuid)
+        #data = ProcessImageSaturation(GetPath(img_uuid))
+        data = ProcessImage2HSV(GetPath(img_uuid))
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
+class PhotoEffects(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print(request.data)
+        json_data = json.loads(request.data)
+        img_uuid = json_data["img_id"]
+        sharpen =  float(json_data["sharpen"])
+        grayscale = int(json_data["grayscale"])
+        sepia = int(json_data["sepia"])
+        saturation = float(json_data["saturation"])
+        print(img_uuid)
+        data = None
+        if saturation == 0 :
+            if sharpen > 0 and grayscale > 0:
+                data = ProcessImageSharpenGrayScaleFilter(GetPath(img_uuid), sharpen)
+            elif sharpen > 0 :
+                data = ProcessImageSharpenFilter(GetPath(img_uuid))
+            elif grayscale > 0 :
+                data = ProcessImageGrayScale(GetPath(img_uuid))
+            elif sepia > 0 :
+                data = ProcessImageSepiaFilter(GetPath(img_uuid))
+            else :
+                print('using dummy filter')
+                data = ProcessImageDummyFilter(GetPath(img_uuid))
+        else:
+            data = ProcessImageEffects(GetPath(img_uuid), sharpen, saturation)
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
 class PhotoMemory(Resource):
 
     def get(self):
@@ -903,8 +951,12 @@ class GetMusicTheme(Resource):
         return send_file('{}/{}'.format('music', audio_file), mimetype="audio/mpeg", cache_timeout=-1)
 
 def page_not_found(e):
-    return flask.redirect('http://192.168.160.199:4040/api/v1/favicon.apple')
+    return flask.redirect("http://"+HOST_ADDRESS+":4040/api/v1/favicon.apple")
 
+class Dummy(Resource):
+
+    def get(self):
+        return make_response()
 
 app = Flask(__name__, template_folder='templates')
 #app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
@@ -961,8 +1013,11 @@ api.add_resource(SetWallPhoto, '/wallphoto')
 api.add_resource(PhotoGrayScale, '/grayscale')
 api.add_resource(PhotoSharpenFilter, '/sharpenfilter')
 api.add_resource(PhotoSepiaFilter, '/sepiafilter')
+api.add_resource(PhotoColorSaturation, '/saturation')
+api.add_resource(PhotoEffects, '/testedit')
 api.add_resource(PhotoMemory, '/memory')
 api.add_resource(GetMusicTheme, '/musictheme')
+api.add_resource(Dummy, '/dummy')
 app.register_blueprint(api_blueprint, url_prefix="/api/v1")
 app.register_error_handler(404, page_not_found)
 app.config.from_object('config')
