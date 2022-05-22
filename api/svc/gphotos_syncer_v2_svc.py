@@ -63,7 +63,7 @@ class DateDict:
     def to_datetime(self):
         return datetime(self.year, self.month, self.day)
 
-GSyncDefaultEpochOrigin = DateDict(2021, 6, 1)
+GSyncDefaultEpochOrigin = DateDict(2022, 5, 20)
 
 class GClientOAuth2(object):
 
@@ -134,23 +134,23 @@ class GPhotosClient_V1(GClientOAuth2):
 
     def store_photo(self, file_name, raw_bytes):
         digest = comp_checksum(raw_bytes)
-        if TestDuplicate(self.user_id, raw_bytes, digest):
+        if TestDuplicate(self.user_id, raw_bytes, digest, "My Google Photos"):
             print ("Detected duplicate entry:{}".format(file_name))
         else:
             InsertPhoto(self.user_id, file_name, raw_bytes, "My Google Photos")
 
     def get_sync_point(self):
-        tuuid, json_input = DBGetNextSyncTopic()
+        tuuid, topic, json_input = DBGetNextSyncTopic()
         if json_input:
             start = DateDict(json_input["Year"], json_input["Month"], json_input["Day"])
-            return tuuid, start, False
+            return tuuid, topic, start, False
 
         tuuid, json_input = DBGetLastSyncTopic()
         if json_input:
             start = DateDict(json_input["Year"], json_input["Month"], json_input["Day"])
-            return None, start, True
+            return None, topic, start, True
 
-        return None, GSyncDefaultEpochOrigin, True
+        return None, topic, GSyncDefaultEpochOrigin, True
 
     def set_sync_point(self, yr, mon, day):
         json_input = dict()
@@ -159,14 +159,16 @@ class GPhotosClient_V1(GClientOAuth2):
         json_input["Day"] = day
         return DBAddNewTopic(uuid.uuid4(), "GPhotos", json.dumps(json_input))
 
-    def update_sync_point(self, tuuid, json_output):
-        return DBUpdateTopic(tuuid, json_output, 2)
+    def update_sync_point(self, tuuid, topic, json_output):
+        return DBUpdateTopic(tuuid, topic, json_output, 2)
 
     def remove_sync_point(self, tuuid):
         DBDeleteSyncTopic(tuuid)
 
     def get_next_sync_point(self, start):
-        end = start.to_datetime() + timedelta(days=30)
+        end =  start.to_datetime() + timedelta(days=30)
+        if end > datetime.today():
+            end = datetime.today()
         tp = end.timetuple()
         return DateDict(tp.tm_year, tp.tm_mon, tp.tm_mday)
 
@@ -179,7 +181,7 @@ class GPhotosClient_V1(GClientOAuth2):
         tuuid = None
         while self.items < self.total_items:
             if page_token is None:
-                tuuid, start, need_update = self.get_sync_point()
+                tuuid, topic, start, need_update = self.get_sync_point()
                 if need_update:
                     tuuid = self.set_sync_point(start.year, start.month, start.day)
                 end = self.get_next_sync_point(start)
@@ -205,6 +207,7 @@ class GPhotosClient_V1(GClientOAuth2):
                 data_dict = json.loads(response.content)
                 # print response.content, 'count:', len(data["mediaItems"])
                 json_output = {
+                    "result" : " ",
                     "synced" : 0,
                     "errors" : 0
                 }
@@ -221,15 +224,19 @@ class GPhotosClient_V1(GClientOAuth2):
                             self.items += 1
                             json_output["synced"] += 1
                         except:
-                            print("db insert error :{}".format(
-                                sys.exc_info()[0]))
+                            print("db insert error :{}".format(sys.exc_info()[0]))
                             json_output["errors"] += 1
+                            raise
+                else:
+                    print("No mediaItems Key in data_dict")
+
                 # print response.status_code, response.headers, len(response.content)
                 if "nextPageToken" in data_dict:
                     page_token = data_dict["nextPageToken"]
-                else:
+                elif self.items > 0:
                     page_token = None
-                    self.update_sync_point(str(tuuid), json.dumps(json_output))
+                    json_output["result"] = "Done"
+                    self.update_sync_point(str(tuuid), topic, json.dumps(json_output))
                     self.set_sync_point(end.year, end.month, end.day)
                     start = end
                     splist.append(tuuid)
@@ -246,7 +253,7 @@ class GPhotosClient_V1(GClientOAuth2):
         print('finished listing all media items')
 
     def count_photos_to_download(self):
-        _, start, _ = self.get_sync_point()
+        _, _, start, _ = self.get_sync_point()
         tp = datetime.today().timetuple()
         end = DateDict(tp.tm_year, tp.tm_mon, tp.tm_mday)
         page_token = None
