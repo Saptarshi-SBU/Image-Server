@@ -93,7 +93,7 @@ function run_next() {
             image = encodeURIComponent(text)
             label = document.getElementById('label' + k);
             label.innerHTML = "Album : <a href=http://$SERVER_HOST_IP:4040/api/v1/myalbum?img=" + image + ">" + arr[i].value.tags + "</a>" + " (" +  arr[i].value.count + ")"
-            label.innerHTML += "<a href=http://$SERVER_HOST_IP:4040/api/v1/myalbumliked?img=" + image + "> &#9829 </a>"
+            //label.innerHTML += "<a href=http://$SERVER_HOST_IP:4040/api/v1/myalbumliked?img=" + image + "> &#9829 </a>"
             console.log('\nlog: ' + text)
         } else {
             newimg = document.getElementById("img" + k)
