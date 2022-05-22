@@ -24,8 +24,8 @@ from flask import Flask, Blueprint, send_file, request, Response, make_response,
 from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
-    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics
-from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter
+    DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics, DBGetPhotoDimensions
+from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter, ProcessImageResize
 from .image_processing import imgcache
 from .svc.gphotos_syncer_v2_svc import GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -159,12 +159,23 @@ class GetPhotoScaled(Resource):
         img_uuid = request.args.get('img')
         if img_uuid is None:
             return make_response("Invalid image request", 400)
+
+        #mobile devices
+        w,h =  DBGetPhotoDimensions(img_uuid)
+        if w < h:
+            #return send_file(GetPath(img_uuid), mimetype='image/jpg')
+            img_data = ProcessImageResize(GetPath(img_uuid))
+            response = make_response(img_data)
+            response.headers.set('Content-Type', 'image/jpg')
+            return response
+
         scale_pc = request.args.get('scale')
         if scale_pc is None:
             scale_pc = 15
 
         img_data = GetEnhancedImage(img_uuid)
         if img_data is None:
+            print ('unenhanced image path {} '.format(GetPath(img_uuid)))
             # checked if image with medium size is processed
             img_data = GetScaledImage(img_uuid)
             if not img_data:
@@ -541,9 +552,14 @@ class GetMyAlbum(Resource):
         print (json_data2)
         json_data = json.loads(request.data)
         img_album = json_data["album_id"]
-        blur =  int(json_data["blur"])
+        blur =  0
+        if "blur" in json_data:
+            blur = int(json_data["blur"])
+        year = 0
+        if "year" in json_data:
+            year =  int(json_data["year"])
         album_id = ConvertAlbumNameToID(img_album)
-        result = GetAlbumPhotos(user_name, img_album, blur)
+        result = GetAlbumPhotos(user_name, img_album, blur, year)
         prefetch_ctx = AlbumPrefetchContext(img_album, str(album_id), GetImgUUIDList(result))
         with prefetchMutex:
             u_session[user_name][album_id] = jsonpickle.encode(prefetch_ctx)
@@ -947,7 +963,7 @@ class GetMusicTheme(Resource):
     @nocacheresponse
     def get(self):
         audio_file = random.choice(os.listdir('{}'.format('api/music')))
-        print (audio_file)
+        print ('audio_file :{}'.format(audio_file))
         return send_file('{}/{}'.format('music', audio_file), mimetype="audio/mpeg", cache_timeout=-1)
 
 def page_not_found(e):

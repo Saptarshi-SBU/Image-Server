@@ -3,9 +3,8 @@
 <head>
 <style>
 
-
 img { 
-    max-height: 100%;
+    max-height: max-content;
     width: auto;
     display: None
 }
@@ -19,27 +18,119 @@ img {
     font-size: 24px;
 }
 
+.grid-container {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
 </style>
 </head>
 
-<p id="demo"></p>
+<body style="background-color:black;">
 
+<!--
 <iframe src="https://olafwempe.com/mp3/silence/silence.mp3" type="audio/mp3" allow="autoplay" id="audio" style="display:none"></iframe>
-
 <audio autoplay loop>
     <source src="http://$SERVER_HOST_IP:4040/api/v1/musictheme" type="audio/mpeg">
 </audio>
+!-->
 
 <div align="center">
-    <img class="margin" id="img" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
-    <div class="marginauto_cap" style="color:blue;"> <figcaption id="icaption">Loading... </figcaption> </div>
+    <div class="grid-container" id="gd1">
+        <div>
+                <img class="marginauto" id="img1" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+        </div>
+        <div>
+                <img class="marginauto" id="img2" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+        </div>
+    </div>
+    
+    <div class="grid-container" id="gd2">
+        <div>
+            <img class="marginauto" id="img3" src="http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=ca509b27-cd33-45ab-9d71-6e1e2df48b09" alt="centered">
+        </div>
+    </div>
+
+
+    <div class="marginauto_cap" style="color:blue;"> <figcaption id="icaption" onclick="toggleControls()";>Loading... </figcaption>
+        <audio id='audio'  preload="auto" autoplay>
+            <source src="http://$SERVER_HOST_IP:4040/api/v1/musictheme" type="audio/mpeg"  />
+            </audio>
+    </div>
+
 </div>
+
+</body>
 
 <script>
 
 // holds json for all photos
 var i = 0;
 var arr;
+var curr = 0;
+
+function run_next1(v1, v2) {
+	newimg1 = document.getElementById("img1")
+	newimg1.style.opacity = 0;
+	newimg1.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v1.value.uuid
+	newimg1.title = v1.value.name + "(" + v1.value.date + ")"
+	newimg1.style.display = "block";
+	newimg1.style.opacity = 1;
+	//newimg1.style.minWidth = "80%";
+	//newimg1.style.minHeight = "80%";
+	newimg2 = document.getElementById("img2")
+	newimg2.style.opacity = 0;
+	newimg2.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v2.value.uuid
+	newimg2.title = v2.value.name + "(" + v2.value.date + ")"
+	newimg2.style.display = "block";
+	newimg2.style.opacity = 1;
+	newimg2.style.minWidth = "80%";
+	newimg2.style.minHeight = "80%";
+	newcap = document.getElementById("icaption")
+	newcap.style.display = "block";
+}
+
+function run_next2(v) {
+	newimg3 = document.getElementById("img3")
+	newimg3.style.opacity = 0;
+    newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
+	newimg3.title = v.value.name + "(" + v.value.date + ")"
+	newimg3.style.minWidth = "100%";
+	newimg3.style.minHeight = "100%";
+	newimg3.style.display = "block";
+	newimg3.style.opacity = 1;
+	newcap = document.getElementById("icaption")
+	newcap.style.display = "block";
+}
+
+function set_slideshow() {
+    if (arr && arr.length > 0) {
+	    var k;
+	    var next = (curr + 1) % arr.length;
+	    var slides = document.getElementsByClassName("grid-container");
+	    if ((arr[curr].value.width < arr[curr].value.height) && (arr[next].value.width < arr[next].value.height)) {
+		for (k = 0; k < slides.length; k++) {
+		      slides[k].style.display = "none";
+		}
+		slides[0].style.display = "flex";
+		run_next1(arr[curr], arr[next])
+		curr = (next + 1) % arr.length;
+	    } else  {
+		for (k = 0; k < slides.length; k++) {
+		      slides[k].style.display = "none";
+		}
+		slides[1].style.display = "block";
+		run_next2(arr[curr])
+		curr = (curr + 1) % arr.length;
+	    }
+    }
+    newcap = document.getElementById("icaption")
+    console.log(arr[curr].value.tags)
+    newcap.innerHTML = arr[curr].value.tags
+    setTimeout(set_slideshow, 15000);
+}
 
 function run_next() {
     var total = arr.length
@@ -49,27 +140,63 @@ function run_next() {
     newimg.title = arr[i].value.name + "(" + arr[i].value.date + ")"
     newimg.style.display = "block";
     newimg.style.opacity = 1;
-    newimg.style.minWidth = "100%";
-    newimg.style.minHeight = "100%";
+    width = parseInt( arr[i].value.width)
+    height = parseInt(arr[i].value.height)
+    if (width > height) {
+      newimg.style.minWidth = "90%";
+      newimg.style.minHeight = "90%";
+      newimg.style.maxWidth = "90%";
+      newimg.style.maxHeight = "90%";
+    } else {
+        //newimg.style.minWidth = max-content //"100%";
+        //newimg.style.minHeight = max-content //"100%";
+        //newimg.style.maxWidth = max-content //"100%";
+        //newimg.style.maxHeight = max-content //"100%";
+        //newimg.style.minWidth = "50%";
+        //newimg.style.minHeight = "50%";
+        //newimg.style.maxWidth = "50%";
+        //newimg.style.maxHeight = "50%";
+    }
     newcap = document.getElementById("icaption")
+    console.log(arr[i].value.tags + " " + "(" + i.toString() + "/" + total.toString() + ")")
     newcap.innerHTML = arr[i].value.tags + " " + "(" + i.toString() + "/" + total.toString() + ")"
-    newcap.style.display = "block";
+    //newcap.style.display = "block";
     i = (i + 1) % arr.length;
     setTimeout(run_next, 10000); // 10 seconds
 }
+
+function toggleControls() {
+ var audio = document.getElementById("audio");
+  if (audio.hasAttribute("controls")) {
+     audio.removeAttribute("controls") 
+     audio.play()
+  } else {
+     audio.setAttribute("controls","controls")
+     audio.play()
+  }
+}
+
+audio.addEventListener('ended', function(ev){
+    console.log("audio Ended"); 
+    xmlhttp_audio = new XMLHttpRequest();
+    xmlhttp_audio.open("GET", 'http://$SERVER_HOST_IP:4040/api/v1/musictheme');
+    xmlhttp_audio.send()
+    // ask user about re-playing the same song & other operations
+});
 
 xmlhttp = new XMLHttpRequest();
 xmlhttp.onreadystatechange = function() {
     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
             //console.log('\nlog: ' + JSON.stringify(xmlhttp.responseText))
             arr = JSON.parse(xmlhttp.responseText)
-            run_next();
+            //run_next();
+            set_slideshow();
     } else {
         console.log(this.status)
     }
 };
 xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
-xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": 0}));
+xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": 0, "year":0}));
 </script>
 
 </html>

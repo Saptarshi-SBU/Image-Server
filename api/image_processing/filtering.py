@@ -55,6 +55,19 @@ def ProcessImage(filepath, scale_percent=15):
 	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
 	return img_encoded.tostring()
  
+def ProcessImageResize(filepath):
+	img_data = cv2.imread(filepath, cv2.IMREAD_COLOR)
+	if img_data is None:
+		print ("invalid image file:", filepath)
+		return None
+	#height = int(img_data.shape[0])
+	#width  = int(img_data.shape[1])
+	#print (filepath, height, width)
+	img_frame = cv2.resize(img_data, (0, 0), fx=0.25, fy=0.25)
+	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+	_, img_encoded = cv2.imencode('.jpg', img_frame, encode_param) # encode converts to bytes
+	return img_encoded.tostring()
+
 def ProcessImageThumbnail(filepath, http=True):
 	image = Image.open(filepath)
 	(w, h) = image.size

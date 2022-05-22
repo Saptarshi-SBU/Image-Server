@@ -132,13 +132,14 @@ def LookupPhotosByDate(user_name, year, month, day=None):
 			photo.Year), "name" : photo.Name, "tags" : photo.Tags }})
 	return photoPaths
 
-def GetAlbumPhotos(user_name, album, blur=0):
+def GetAlbumPhotos(user_name, album, blur=0, year=0):
 	photoPaths = []
 	result = []
 
 	with DBManager() as db:
 		_dbSession = db.getSession()
-		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album) \
+		if year == 0:
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album) \
 						.order_by(
 						PhotoModel.Year
 						).order_by(
@@ -148,11 +149,21 @@ def GetAlbumPhotos(user_name, album, blur=0):
 						).order_by(
 						PhotoModel.DayTime
 						)
+		else:
+			result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter(PhotoModel.Tags == album).filter(PhotoModel.Year==year) \
+						.order_by(
+						PhotoModel.Month
+						).order_by(
+						PhotoModel.Day
+						).order_by(
+						PhotoModel.DayTime
+						)
 
 		for photo in result:
 			if DBGetPhotoBlur(photo.UUID) >= blur:
+				w, h = DBGetPhotoDimensions(photo.UUID)
 				photoPaths.append({ "value" : { "uuid" : photo.UUID, "date" : '{}-{}-{}-{}'.format(photo.DayTime, photo.Day, photo.Month, \
-					photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes }})
+					photo.Year), "name" : photo.Name, "tags" : photo.Tags , "like" : photo.Likes, "width" : w, "height" :h }})
 			#photoPaths.append(photo.UUID)
 		return photoPaths
 
@@ -394,7 +405,7 @@ def FilterPhotoAlbums(user_name):
 	photoList.sort(key=SortbyDate, reverse=True)
 	return photoList
 
-def TestDuplicate(user_name, sourceBlob, digest):
+def TestDuplicate(user_name, sourceBlob, digest, sourcetag):
 	with DBManager() as db:
 		_dbSession = db.getSession()	
 		result = _dbSession.query(PhotoModel).filter(PhotoModel.Username==user_name).filter((PhotoModel.Digest == digest)).all()
@@ -404,7 +415,8 @@ def TestDuplicate(user_name, sourceBlob, digest):
 			with open(imgPath, 'rb') as fp:
 				fileBlob = fp.read()
 				if bytearray(sourceBlob) == bytearray(fileBlob):
-					return True
+					if sourcetag == photo.Tags:
+						return True
 	return False
 
 def InsertPhoto(user_name, filename, fileBlob, description):
@@ -413,11 +425,12 @@ def InsertPhoto(user_name, filename, fileBlob, description):
 	digest = comp_checksum(fileBlob)
 	album_id = ConvertAlbumNameToID(description)
 
-	if TestDuplicate(user_name, fileBlob, digest):
+	if TestDuplicate(user_name, fileBlob, digest, description):
 		print ("Detected duplicate entry")
 		return;
 
 	imgPath = '{}/{}.JPG'.format(img_dir, img_uuid)
+	print('InsertPhoto imgPath :{}'.format(imgPath))
 	fd = os.open(imgPath, os.O_RDWR | os.O_CREAT, 0o644)
 	os.write(fd, fileBlob)
 	os.close(fd)
@@ -690,11 +703,12 @@ def DBGetNewTopics():
 	return result
 
 
-def DBUpdateTopic(uuid, output, state):
+def DBUpdateTopic(uuid, topic, output, state):
 	with DBManager() as db:
 		dbSession = db.getSession()
 		entry = dbSession.query(TopicModel)\
-                    .filter(TopicModel.UUID == uuid).first()
+                    .filter(TopicModel.Topic==topic).filter(TopicModel.UUID == uuid).first()
+		print (entry)
 		entry.JSONOutput = output
 		entry.State = state
 		dbSession.commit()
@@ -710,7 +724,7 @@ def DBGetNextSyncTopic():
 		if result:
 			tuuid = result.UUID
 			json_input = json.loads(result.JSONInput)
-	return tuuid, json_input
+	return tuuid, "GPhotos", json_input
 
 def DBGetLastSyncTopic():
 	tuuid = None

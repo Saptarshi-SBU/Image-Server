@@ -113,7 +113,7 @@ class TopicModel(Base):
     Year = Column(Integer, nullable=False)
 
     def __repr__(self):
-        return "<%s(uuid : %s topic : %s, state : %d)>" % (self.UUID, self.Topic, self.State)
+        return "<%s(uuid : %s topic : %s, state : %d)>" % (self.__tablename__, self.UUID, self.Topic, self.State)
 
 # Model Queries
 def DBGetPhotos(_dbSession):

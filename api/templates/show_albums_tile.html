@@ -113,6 +113,28 @@ span:last-child
     background-color: #fff;
 }
 
+.datasettingsForm {
+        position: relative;
+        text-align: center;
+        width: 100%;
+}
+
+.datasettingsPopup {
+        display: none;
+        position: fixed;
+        left: 45%;
+        top: 5%;
+        transform: translate(-50%, 5%);
+        border: 3px solid #999999;
+        z-index: 9;
+}
+
+.dataformContainer {
+    max-width: 300px;
+    padding: 20px;
+    background-color: #fff;
+}
+
 </style>
 </head>
 
@@ -155,6 +177,7 @@ span:last-child
             <a id="m1" style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/viewalbum?album=album_value">SlideShow</a>
             <a id="m2" style="font-size: 16px;" href="http://$SERVER_HOST_IP:4040/api/v1/myalbumliked?album=album_value">Favourites</a>
             <a id="m3" style="font-size: 16px;" href="#settings" onclick="show_settings()">Settings</a>
+            <a id="m5" style="font-size: 16px;" href="#datasettings" onclick="show_datasettings()">DataSettings</a>
             <a id="m4" style="font-size: 16px;" href="#download" onclick="download_album()">Download</a>
         </div>
     </div>
@@ -174,6 +197,20 @@ span:last-child
         <input type="range" style="height:16px;width:48px;font-size:16px;" min="0" max="100" value="0" name="Blur" id="sliderBlur" onchange="updateBlurVal(this.value)" ></input>
         <br><br>
         <input type="submit" value="Apply" onclick="apply_settings()">
+      </form>
+    </div>
+  </div>
+
+  <div class="dataSettingsForm">
+    <div class="datasettingsPopup" id="dataSettingsPopupId">
+      <form action="javascript:void(0);" method="post" class="dataformContainer">
+        <h3>Apply Data Settings</h3>
+        <br>
+        <label style="font-size: 16px;color:blue;background-color:Transparent;border:None;cursor:pointer">Year</label>
+        <input type="text"  id="album_year" value="0" onchange="updateFilterYear(this.value)"></input>
+        <br>
+        <br><br>
+        <input type="submit" value="Apply" onclick="apply_datasettings()">
       </form>
     </div>
   </div>
@@ -231,9 +268,22 @@ function show_settings() {
     return false;
 }
 
+function show_datasettings() {
+    document.getElementById("dataSettingsPopupId").style.display = "block";
+    return false;
+}
+
 function apply_settings() {
     document.getElementById("settingsPopupId").style.display = "none";
     process_album()
+    next = 0 // reset
+    show_album()
+    window.location.reload();
+    return false
+}
+
+function apply_datasettings() {
+    document.getElementById("dataSettingsPopupId").style.display = "none";
     next = 0 // reset
     show_album()
     window.location.reload();
@@ -284,11 +334,18 @@ function show_album() {
         rb = 0
     }
 
+    var album_yr = document.getElementById("album_year");
+    yr = localStorage.getItem("albumFilterYear");
+    if (yr === null) {
+        yr = 0
+    }
+
     xmlhttp.open("POST", 'http://$SERVER_HOST_IP:4040/api/v1/myalbum');
     xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     console.log("request blur value :" + rangeslider.value)
     console.log("request blur value :" + rb)
-    xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": rb}));
+    console.log("request album year :" + album_yr.value)
+    xmlhttp.send(JSON.stringify({ "album_id": "album_value", "blur": rb, "year":yr}));
     //xmlhttp.send("album_value");
 }
 
@@ -376,6 +433,12 @@ function updateBlurVal(value) {
     rangeBlur = value
     console.log("new range blur " + rangeBlur)
     localStorage.setItem("rangeSliderVal", rangeBlur);
+}
+
+function updateFilterYear(value) {
+    filter_year = value
+    console.log("filter year " + filter_year)
+    localStorage.setItem("albumFilterYear", filter_year);
 }
 
 // Close the dropdown menu if the user clicks outside of it
