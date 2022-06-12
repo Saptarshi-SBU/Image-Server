@@ -95,7 +95,7 @@ function run_next1(v1, v2) {
 function run_next2(v) {
 	newimg3 = document.getElementById("img3")
 	newimg3.style.opacity = 0;
-    newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
+	newimg3.src = "http://$SERVER_HOST_IP:4040/api/v1/scaledphoto?img=" + v.value.uuid
 	newimg3.title = v.value.name + "(" + v.value.date + ")"
 	newimg3.style.minWidth = "100%";
 	newimg3.style.minHeight = "100%";
@@ -106,30 +106,43 @@ function run_next2(v) {
 }
 
 function set_slideshow() {
+    var done = false
     if (arr && arr.length > 0) {
 	    var k;
 	    var next = (curr + 1) % arr.length;
 	    var slides = document.getElementsByClassName("grid-container");
-	    if ((arr[curr].value.width < arr[curr].value.height) && (arr[next].value.width < arr[next].value.height)) {
+	    if ((arr[curr].value.width >= 3024 && arr[curr].value.height >= 4032) && (arr[next].value.width >= 3024 && arr[next].value.height >= 4032)) {
 		for (k = 0; k < slides.length; k++) {
 		      slides[k].style.display = "none";
 		}
 		slides[0].style.display = "flex";
 		run_next1(arr[curr], arr[next])
 		curr = (next + 1) % arr.length;
-	    } else  {
+		done = true
+	    } else if ((arr[curr].value.width > arr[curr].value.height) && (arr[curr].value.width >= 6000 && arr[curr].value.height >= 4000)) {
 		for (k = 0; k < slides.length; k++) {
 		      slides[k].style.display = "none";
 		}
 		slides[1].style.display = "block";
 		run_next2(arr[curr])
 		curr = (curr + 1) % arr.length;
+		done = true
+	    } else {
+		curr = (curr + 1) % arr.length;
+		console.log("skipping")
+		console.log(curr)
+		console.log(arr[curr].value.height)
+		console.log(arr[curr].value.width)
 	    }
     }
     newcap = document.getElementById("icaption")
     console.log(arr[curr].value.tags)
     newcap.innerHTML = arr[curr].value.tags
-    setTimeout(set_slideshow, 15000);
+    if (done) {
+	setTimeout(set_slideshow, 10000);
+    } else {
+	setTimeout(set_slideshow, 1000);
+    }
 }
 
 function run_next() {
@@ -178,10 +191,10 @@ function toggleControls() {
 
 audio.addEventListener('ended', function(ev){
     console.log("audio Ended"); 
-    xmlhttp_audio = new XMLHttpRequest();
-    xmlhttp_audio.open("GET", 'http://$SERVER_HOST_IP:4040/api/v1/musictheme');
-    xmlhttp_audio.send()
+    var audioElement = document.getElementById("audio");
     // ask user about re-playing the same song & other operations
+    audioElement.setAttribute('src', 'http://$SERVER_HOST_IP:4040/api/v1/musictheme')
+    audioElement.play()
 });
 
 xmlhttp = new XMLHttpRequest();
