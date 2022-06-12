@@ -25,7 +25,7 @@ from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics, DBGetPhotoDimensions
-from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter, ProcessImageResize
+from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter, ProcessImageResize, ProcessImageSketchFilter, ProcessImageCartoon
 from .image_processing import imgcache
 from .svc.gphotos_syncer_v2_svc import GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
@@ -906,6 +906,8 @@ class PhotoEffects(Resource):
         sharpen =  float(json_data["sharpen"])
         grayscale = int(json_data["grayscale"])
         sepia = int(json_data["sepia"])
+        sketch = int(json_data["sketch"])
+        cartoon = int(json_data["cartoon"])
         saturation = float(json_data["saturation"])
         print(img_uuid)
         data = None
@@ -918,11 +920,29 @@ class PhotoEffects(Resource):
                 data = ProcessImageGrayScale(GetPath(img_uuid))
             elif sepia > 0 :
                 data = ProcessImageSepiaFilter(GetPath(img_uuid))
+            elif sketch > 0:
+                data = ProcessImageSketchFilter(GetPath(img_uuid))
+            elif cartoon > 0:
+                data = ProcessImageCartoon(GetPath(img_uuid))
             else :
                 print('using dummy filter')
                 data = ProcessImageDummyFilter(GetPath(img_uuid))
         else:
             data = ProcessImageEffects(GetPath(img_uuid), sharpen, saturation)
+        response = make_response(data)
+        response.headers.set('Content-Type', 'image/jpg')
+        return response
+
+class PhotoSketch(Resource):
+
+    def get(self):
+        return Response()
+
+    def post(self):
+        print(request.data)
+        img_uuid = request.data.decode("utf-8")
+        print(img_uuid)
+        data = ProcessImageSketchFilter(GetPath(img_uuid))
         response = make_response(data)
         response.headers.set('Content-Type', 'image/jpg')
         return response
@@ -1030,6 +1050,7 @@ api.add_resource(PhotoGrayScale, '/grayscale')
 api.add_resource(PhotoSharpenFilter, '/sharpenfilter')
 api.add_resource(PhotoSepiaFilter, '/sepiafilter')
 api.add_resource(PhotoColorSaturation, '/saturation')
+api.add_resource(PhotoSketch, '/sketch')
 api.add_resource(PhotoEffects, '/testedit')
 api.add_resource(PhotoMemory, '/memory')
 api.add_resource(GetMusicTheme, '/musictheme')
