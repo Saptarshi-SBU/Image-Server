@@ -12,7 +12,7 @@ import threading
 from ..db.DB import DBManager, PhotoModel
 from ..db.query import GetImageDir, GetEnhancedImageDir, DBGetNewTopics, DBUpdateTopic, GetAlbumPhotos
 from ..db.dbconf import *
-from ..image_processing.filtering import ProcessImageEnhanced
+from ..filters.filtering import ProcessImageEnhanced
 
 #progressbar
 pg = {}

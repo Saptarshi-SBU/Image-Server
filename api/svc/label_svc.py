@@ -10,7 +10,7 @@ import configparser
 from io import BytesIO
 import dask.bag as dbag
 from dask.diagnostics import ProgressBar
-from image_processing.coco_resnet_50 import object_detection_api
+from filters.coco_resnet_50 import object_detection_api
 
 LABELPHOTO_URL   = 'http://{}:4040/api/v1/label'
 UNLABELPHOTO_URL = 'http://{}:4040/api/v1/nolabel'

@@ -25,8 +25,8 @@ from .db.DB import DBGetPhoto, InitPhotosDb
 from .db.query import ConvertAlbumNameToID, DBAddNewTopic, GetAlbumDates, GetEnhancedImageDir, InsertPhoto, LookupPhotos, LookupPhotosByDate, FilterPhotos, FilterPhotosPotraitStyle, FilterPhotoAlbums, DeletePhoto, MarkPhotoFav, \
     UpdatePhotoTag, LookupUser, AddUser, AutoCompleteAlbum, GetPath, GetEnhancedImagePath, GetAlbumPhotos, GetAlbumPhotosOnlyLiked, GetAlbumDates, GetAlbumViewItems, GetNumAlbums, GetPhotoAlbumID, ConvertAlbumNameToID, DBGetPhotoLabel, DBAddPhotoLabel, \
     DBGetUnLabeledPhotos, FilterLabeledPhotos, FilterLabeledPhotosPotraitStyle, GetImageDir, GetHostIP, GetScaledImage, GetEnhancedImage,GetThumbnailImage, DBGetUserImage, DBSetUserImage, DBGetSyncTopics, DBGetPhotoDimensions
-from .image_processing.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter, ProcessImageResize, ProcessImageSketchFilter, ProcessImageCartoon
-from .image_processing import imgcache
+from .filters.filtering import ProcessImage, ProcessImageThumbnail, ProcessImageGrayScale, ProcessImageSharpenFilter, ProcessImageSepiaFilter, ProcessImageSaturation, ProcessImage2HSV, ProcessImageEffects, ProcessImageSharpenGrayScaleFilter, ProcessImageDummyFilter, ProcessImageResize, ProcessImageSketchFilter, ProcessImageCartoon
+from .filters import imgcache
 from .svc.gphotos_syncer_v2_svc import GetPhotoOAuthURL, SyncPhotos, SyncPhotosStatus
 #import flask_monitoringdashboard as dashboard
 from flask_sqlalchemy import SQLAlchemy

@@ -7,7 +7,7 @@ import threading
 from ..db.DB import DBManager, PhotoModel, PhotoSizeModel
 from ..db.dbconf import *
 from ..db.query import DBGetPhotoDimensions, DBGetPhotoNullDimensions, DBAddPhotoDimensions, FilterPhotos
-from ..image_processing.filtering import GetImageDimensions
+from ..filters.filtering import GetImageDimensions
 
 def ScanAddPhotosDimension():
 	count = 0

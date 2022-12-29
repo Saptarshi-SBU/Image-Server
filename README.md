@@ -38,36 +38,34 @@
 
  On Host B
  +) sudo mysql
+
   ++) create user 'photoserver'@'localhost' password xxx
+
   ++) select * from user;
+
  +) mysql -u photoserver -p
+
   ++) create database Photos;
+
   ++) GRANT ALL PRIVILEGES ON *.* TO 'photoserver'@'localhost';
+
  +)sudo mysql -u photoserver -p Photos < photos.sql
  
-## Screenshots
+## Features
 
 ### Browse Albums:
 
- <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/Albums.png" width="800">
-
 ### Search Albums:
 
- <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/Search.png" width="800">
+### Image Labelling Service :
 
-### Image Labelling Service
-
-##### $python -m api.svc.label_svc
-
- <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/LabelledPhoto03.png" width="800">
+#### $python -m api.svc.label_svc
 
 ### Import GoogleCloud Photos :
 
-##### $python -m api.svc.gphotos_syncer_svc (provide access token)
-##### $python -m api.svc.photos_resizing_svc
-##### $python -m api.svc.photos_dimensions_svc
-
- <img src="https://github.com/Saptarshi-SBU/APIserver/blob/master/api/docs/screenshots/GooglePhoto05.png" width="800">
+#### $python -m api.svc.gphotos_syncer_svc (provide access token)
+#### $python -m api.svc.photos_resizing_svc
+#### $python -m api.svc.photos_dimensions_svc
 
 ### API Statistics :
 

@@ -8,7 +8,7 @@ import threading
 from ..db.DB import DBManager, PhotoModel
 from ..db.query import GetMediumScaledImageDir
 from ..db.dbconf import *
-from ..image_processing.filtering import ProcessImage, TestImageSizeRatio
+from ..filters.filtering import ProcessImage, TestImageSizeRatio
 
 def CheckConvertScalingSavings():
 	with DBManager() as db: 

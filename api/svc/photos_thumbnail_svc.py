@@ -9,7 +9,7 @@ import threading
 from ..db.DB import DBManager, PhotoModel
 from ..db.query import GetImageDir, GetThumbnailImageDir
 from ..db.dbconf import *
-from ..image_processing.filtering import ProcessImageThumbnail
+from ..filters.filtering import ProcessImageThumbnail
 
 #progressbar
 pg = {}

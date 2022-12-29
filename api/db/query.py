@@ -13,7 +13,7 @@ import sqlalchemy
 from ..utils.checksum import comp_checksum
 from ..strings.auto_complete import AutoComplete
 from .DB import DBManager, DBAddPhoto, InitPhotosDb, DumpTables, PhotoModel, LabelModel, UserModel, PhotoSizeModel, PhotoBlurModel, TopicModel
-from ..image_processing.filtering import GetImageDimensions
+from ..filters.filtering import GetImageDimensions
 
 CONFIG_FILE="/etc/api.cfg"
 

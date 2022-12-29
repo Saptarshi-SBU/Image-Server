@@ -11,7 +11,7 @@ from tqdm import tqdm
 import threading
 from ..db.query import DBAddPhotoBlur, GetImageDir, DBGetNewTopics, DBUpdateTopic, GetAlbumPhotos, DBGetPhotoBlur, DBAddPhotoBlur
 from ..db.dbconf import *
-from ..image_processing.filtering import ComputeImageBlur
+from ..filters.filtering import ComputeImageBlur
 
 #progressbar
 pg = {}
